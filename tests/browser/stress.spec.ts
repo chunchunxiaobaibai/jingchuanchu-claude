@@ -6,6 +6,26 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+interface PerfData {
+  frameTimes: number[];
+  longTasks: number;
+  heapSamples: number[];
+}
+
+interface Metrics {
+  frameTimes: { p50: number; p95: number; count: number };
+  heap: { avgMB: number; samples: number };
+  longTasks: number;
+  fps: number;
+}
+
+declare global {
+  interface Window {
+    perfData: PerfData;
+    getMetrics(): Metrics;
+  }
+}
+
 test.describe('B2 浏览器压力测试', () => {
   test('2000 精灵 + 500 碰撞体 + HUD + 200 行列表', async ({ page }) => {
     // 启动压力页面
@@ -40,9 +60,9 @@ test.describe('B2 浏览器压力测试', () => {
         frameTimes: metrics.frameTimes,
         heap: metrics.heap,
         longTasks: metrics.longTasks,
-        fps: metrics.fps
+        fps: metrics.fps,
       },
-      rawFrameTimes: await page.evaluate(() => window.perfData.frameTimes)
+      rawFrameTimes: await page.evaluate(() => window.perfData.frameTimes),
     };
 
     const outputPath = join(__dirname, '../../docs/performance/browser-stress-0.5.json');

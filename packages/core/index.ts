@@ -4,6 +4,25 @@ export type Cleanup = () => void;
 export class Scope {
   private cleanups: Cleanup[] = [];
   private closed = false;
+  private _owner: unknown;
+
+  /**
+   * Associates an owner with this scope. Used by reactive-core to route errors.
+   * Type is `unknown` to avoid core depending on app package.
+   */
+  setOwner(owner: unknown): void {
+    if (this._owner !== undefined) throw new Error('Scope owner already set');
+    this._owner = owner;
+  }
+
+  /**
+   * Gets the owner associated with this scope, if any.
+   * Type is `unknown`; caller must cast to the expected type.
+   */
+  getOwner(): unknown {
+    return this._owner;
+  }
+
   own(cleanup: Cleanup): Cleanup {
     if (this.closed) {
       cleanup();

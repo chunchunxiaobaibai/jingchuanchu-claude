@@ -20,10 +20,10 @@ P4 按需（仅由 P0/P1 复测数据触发）
 
 ## P0：测量基线
 
-| 状态 / ID | 内容与验收                                                                                                                                                                                                                       | 文件范围                                               | 验证                                                 |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | ---------------------------------------------------- |
-| [x] B1    | 扩展 Node 基准：signal/Store 每帧写对象、computed 链输出不变、`each` 200 行重排与小幅变更（happy-dom，统计 DOM 移动次数）、碰撞 500/2000 体、精灵带变换绘制 1000/5000、单帧多次 query。输出 `docs/performance/baseline-0.5.json` | `scripts/benchmark.ts`、`docs/performance/README.md`   | `npm run benchmark -- <输出>`，同机重复 2 次确认波动 |
-| [x] B2    | 浏览器压力页：2000 精灵 + 500 碰撞体 + 每帧更新 HUD + 200 行列表，记录帧耗时 p50/p95、堆内存、长任务                                                                                                                             | `tests/browser/stress-fixture.html`、`stress.spec.ts`  | `npm run test:browser:stress`，Chrome headless 验证  |
+| 状态 / ID | 内容与验收                                                                                                                                                                                                                       | 文件范围                                              | 验证                                                 |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------- |
+| [x] B1    | 扩展 Node 基准：signal/Store 每帧写对象、computed 链输出不变、`each` 200 行重排与小幅变更（happy-dom，统计 DOM 移动次数）、碰撞 500/2000 体、精灵带变换绘制 1000/5000、单帧多次 query。输出 `docs/performance/baseline-0.5.json` | `scripts/benchmark.ts`、`docs/performance/README.md`  | `npm run benchmark -- <输出>`，同机重复 2 次确认波动 |
+| [x] B2    | 浏览器压力页：2000 精灵 + 500 碰撞体 + 每帧更新 HUD + 200 行列表，记录帧耗时 p50/p95、堆内存、长任务                                                                                                                             | `tests/browser/stress-fixture.html`、`stress.spec.ts` | `npm run test:browser:stress`，Chrome headless 验证  |
 
 检查点：列出各热点在压力场景中的占比，决定 P1/P2 中哪些任务实施、哪些关闭。
 
@@ -63,11 +63,11 @@ B2 浏览器验证（2026-11-07，Chrome headless/Windows 11/i7-12700H，数据�
 
 ## P3：结构整理
 
-| 状态 / ID | 内容与验收                                                                                                                                                                                           | 文件范围                                                                                                       | 验证                     |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------ |
-| [x] R1    | 统一帧循环：browser 包新增共享的帧循环实现（requestFrame、可见性、时间间隔上限、错误终止），`runBrowser` 与 `GameCanvas` 共用；`runBrowser` 签名与行为保持不变，并在文档中写明统一的时间间隔上限策略 | `browser/index.ts`、`runtime/canvas-host.ts`、`browser.test.ts`、`canvas-host.test.ts`                         | 两侧定向测试；typecheck  |
-| [ ] R2    | 调度器归属：effect/render 的报错路由到所属应用的 `onError`，多个应用互不影响；是否拆成每应用独立队列，由规格评审决定                                                                                 | `runtime/scheduler.ts`、`runtime/application.ts`、`docs/specs/reactive-core.md`、`application-runtime.test.ts` | 两应用隔离与报错来源测试 |
-| [x] R3    | 旧路线收敛：为 `mountGame`/`defineView` 等旧入口加 `@deprecated` 和迁移指引，不删除、不改行为；移除时间由发布任务决定                                                                                | 旧入口 JSDoc、`docs/development/migrating-to-application.md`、CHANGELOG                                        | typecheck；文档静态检查  |
+| 状态 / ID | 内容与验收                                                                                                                                                                                           | 文件范围                                                                                                                                                               | 验证                                |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| [x] R1    | 统一帧循环：browser 包新增共享的帧循环实现（requestFrame、可见性、时间间隔上限、错误终止），`runBrowser` 与 `GameCanvas` 共用；`runBrowser` 签名与行为保持不变，并在文档中写明统一的时间间隔上限策略 | `browser/index.ts`、`runtime/canvas-host.ts`、`browser.test.ts`、`canvas-host.test.ts`                                                                                 | 两侧定向测试；typecheck             |
+| [x] R2    | 调度器归属：effect/render 的报错路由到所属应用的 `onError`，多个应用互不影响；拆成每应用独立队列，针对多游戏整合场景隔离性能与错误                                                                   | `runtime/scheduler.ts`、`runtime/application.ts`、`runtime/component-owner.ts`、`packages/core/index.ts`、`docs/specs/reactive-core.md`、`application-runtime.test.ts` | 两应用隔离与报错来源测试；typecheck |
+| [x] R3    | 旧路线收敛：为 `mountGame`/`defineView` 等旧入口加 `@deprecated` 和迁移指引，不删除、不改行为；移除时间由发布任务决定                                                                                | 旧入口 JSDoc、`docs/development/migrating-to-application.md`、CHANGELOG                                                                                                | typecheck；文档静态检查             |
 
 ## P4：按需（仅由测量触发）
 
