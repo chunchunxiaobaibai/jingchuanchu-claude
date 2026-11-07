@@ -27,7 +27,7 @@ renderer.stroke({ color: '#176b58', width: 5, points: [{ x: 20, y: 20 }] });
 
 ## 0.4.0 扩展
 
-`/features` 提供 Transform2D、Camera2D、Sprite2D、Animation2D、animationModule；`/collision` 提供 Collider2D、detectCollisions、collisionModule。原有 Canvas2D、Position2D 和 Shape2D 保留。Canvas2D 新增 resize/toWorldPoint，drawWorld 可传相机；canvas2DModule 也可传 camera。矩形碰撞使用世界 AABB，非均匀缩放圆使用保守包围圆，不提供刚体响应。
+`/features` 提供 Transform2D、Camera2D、Sprite2D、Animation2D、animationModule；`/collision` 提供 Collider2D、detectCollisions、collisionModule。原有 Canvas2D、Position2D 和 Shape2D 保留。Canvas2D 新增 resize/toWorldPoint，drawWorld 可传相机；canvas2DModule 也可传 camera。矩形碰撞使用世界 AABB，非均匀缩放圆使用保守包围圆，不提供刚体响应。下一版本 detectCollisions/collisionModule 可传 `cellSize` 启用可选网格宽阶段，默认仍为 X 轴扫描。
 
 本仓库 0.4.0 尚未上传 npm，新增能力请使用本地 tgz 或分发套件；公共包当前为 0.3.0。完整契约见分发套件 `docs/development/extensions-0.4.md`。
 
