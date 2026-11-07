@@ -65,7 +65,7 @@ B1 初步分诊（2026-11-07，仅 Node/happy-dom，数据与换算见 [性能�
 | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------ |
 | [x] R1    | 统一帧循环：browser 包新增共享的帧循环实现（requestFrame、可见性、时间间隔上限、错误终止），`runBrowser` 与 `GameCanvas` 共用；`runBrowser` 签名与行为保持不变，并在文档中写明统一的时间间隔上限策略 | `browser/index.ts`、`runtime/canvas-host.ts`、`browser.test.ts`、`canvas-host.test.ts`                         | 两侧定向测试；typecheck  |
 | [ ] R2    | 调度器归属：effect/render 的报错路由到所属应用的 `onError`，多个应用互不影响；是否拆成每应用独立队列，由规格评审决定                                                                                 | `runtime/scheduler.ts`、`runtime/application.ts`、`docs/specs/reactive-core.md`、`application-runtime.test.ts` | 两应用隔离与报错来源测试 |
-| [ ] R3    | 旧路线收敛：为 `mountGame`/`defineView` 等旧入口加 `@deprecated` 和迁移指引，不删除、不改行为；移除时间由发布任务决定                                                                                | 旧入口 JSDoc、`docs/development/migrating-to-application.md`、CHANGELOG                                        | typecheck；文档静态检查  |
+| [x] R3    | 旧路线收敛：为 `mountGame`/`defineView` 等旧入口加 `@deprecated` 和迁移指引，不删除、不改行为；移除时间由发布任务决定                                                                                | 旧入口 JSDoc、`docs/development/migrating-to-application.md`、CHANGELOG                                        | typecheck；文档静态检查  |
 
 ## P4：按需（仅由测量触发）
 
