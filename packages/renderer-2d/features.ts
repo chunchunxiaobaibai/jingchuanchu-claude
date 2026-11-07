@@ -43,35 +43,46 @@ export function inverse(matrix: Matrix2D): Matrix2D {
   ];
 }
 function local(value: Transform): Matrix2D {
-  if (
-    ![value.x, value.y, value.rotation ?? 0, value.scaleX ?? 1, value.scaleY ?? 1].every(
-      Number.isFinite,
-    )
-  )
-    throw new Error('Invalid transform');
-  const c = Math.cos(value.rotation ?? 0),
-    s = Math.sin(value.rotation ?? 0),
+  const rotation = value.rotation ?? 0,
     x = value.scaleX ?? 1,
     y = value.scaleY ?? 1;
+  // Checked individually: this runs per entity per frame and should not allocate.
+  if (
+    !Number.isFinite(value.x) ||
+    !Number.isFinite(value.y) ||
+    !Number.isFinite(rotation) ||
+    !Number.isFinite(x) ||
+    !Number.isFinite(y)
+  )
+    throw new Error('Invalid transform');
+  const c = Math.cos(rotation),
+    s = Math.sin(rotation);
   return [c * x, s * x, -s * y, c * y, value.x, value.y];
 }
+const origin: Point = Object.freeze({ x: 0, y: 0 });
 /** Resolver cache lives for one drawing/collision traversal, so direct component edits remain visible next time. */
 export function createTransformResolver(world: World): (entity: Entity) => Matrix2D {
   const cache = new Map<Entity, Matrix2D>();
   const visiting = new Set<Entity>();
-  const resolve = (entity: Entity): Matrix2D => {
+  // Parent chains are cached and cycle-checked; parentless entities skip that bookkeeping.
+  const chained = (entity: Entity): Matrix2D => {
     if (!world.isAlive(entity)) throw new Error('Stale transform parent');
     const found = cache.get(entity);
     if (found) return found;
     if (visiting.has(entity)) throw new Error('Transform parent cycle');
     visiting.add(entity);
     const value = world.get(entity, Transform2D);
-    const position = world.get(entity, Position2D) ?? { x: 0, y: 0 };
-    let matrix = local(value ?? position);
-    if (value?.parent) matrix = multiply(resolve(value.parent), matrix);
+    let matrix = local(value ?? world.get(entity, Position2D) ?? origin);
+    if (value?.parent) matrix = multiply(chained(value.parent), matrix);
     visiting.delete(entity);
     cache.set(entity, matrix);
     return matrix;
+  };
+  const resolve = (entity: Entity): Matrix2D => {
+    if (!world.isAlive(entity)) throw new Error('Stale transform parent');
+    const value = world.get(entity, Transform2D);
+    if (value?.parent) return chained(entity);
+    return local(value ?? world.get(entity, Position2D) ?? origin);
   };
   return resolve;
 }
