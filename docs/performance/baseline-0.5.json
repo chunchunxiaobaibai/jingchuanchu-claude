@@ -1,0 +1,197 @@
+{
+  "node": "v24.12.0",
+  "platform": "win32",
+  "units": "milliseconds per batch",
+  "samples": 15,
+  "checksum": 78750393582,
+  "counters": {
+    "collision-pairs:500": 180,
+    "collision-pairs:2000": 638,
+    "computed-unchanged:effect-runs-per-frame": 50,
+    "each-200:swap-two:dom-insertions": 200,
+    "each-200:reverse:dom-insertions": 200,
+    "each-200:rename-one:dom-insertions": 200
+  },
+  "results": [
+    {
+      "name": "query:100:1",
+      "medianMs": 0.2318000000000211,
+      "minMs": 0.12609999999995125,
+      "maxMs": 0.4411999999999807
+    },
+    {
+      "name": "query:100:2",
+      "medianMs": 0.27690000000006876,
+      "minMs": 0.14169999999990068,
+      "maxMs": 1.9976999999998952
+    },
+    {
+      "name": "query:100:4",
+      "medianMs": 0.18620000000009895,
+      "minMs": 0.17319999999995161,
+      "maxMs": 0.20070000000009713
+    },
+    {
+      "name": "query:1000:1",
+      "medianMs": 1.4381000000000768,
+      "minMs": 0.9236000000000786,
+      "maxMs": 2.6946000000000367
+    },
+    {
+      "name": "query:1000:2",
+      "medianMs": 1.148300000000063,
+      "minMs": 1.070600000000013,
+      "maxMs": 1.840800000000172
+    },
+    {
+      "name": "query:1000:4",
+      "medianMs": 1.360600000000204,
+      "minMs": 1.2807000000000244,
+      "maxMs": 2.50019999999995
+    },
+    {
+      "name": "query:10000:1",
+      "medianMs": 15.18899999999985,
+      "minMs": 13.21699999999987,
+      "maxMs": 19.015800000000127
+    },
+    {
+      "name": "query:10000:2",
+      "medianMs": 15.828300000000127,
+      "minMs": 14.165500000000065,
+      "maxMs": 23.142399999999952
+    },
+    {
+      "name": "query:10000:4",
+      "medianMs": 19.27500000000009,
+      "minMs": 17.884000000000015,
+      "maxMs": 21.214800000000196
+    },
+    {
+      "name": "systems:1000:diagnostics=true",
+      "medianMs": 10.285199999999804,
+      "minMs": 9.749099999999999,
+      "maxMs": 12.057900000000245
+    },
+    {
+      "name": "systems:1000:diagnostics=false",
+      "medianMs": 1.1449999999999818,
+      "minMs": 1.0918000000001484,
+      "maxMs": 1.7618000000002212
+    },
+    {
+      "name": "draw-js:100",
+      "medianMs": 0.4963999999999942,
+      "minMs": 0.43249999999989086,
+      "maxMs": 0.7118000000000393
+    },
+    {
+      "name": "draw-js:1000",
+      "medianMs": 4.684799999999996,
+      "minMs": 4.197599999999966,
+      "maxMs": 6.423200000000179
+    },
+    {
+      "name": "draw-sprites-js:1000",
+      "medianMs": 8.384800000000268,
+      "minMs": 7.819600000000264,
+      "maxMs": 11.233200000000124
+    },
+    {
+      "name": "draw-sprites-js:5000",
+      "medianMs": 88.14139999999998,
+      "minMs": 59.66370000000006,
+      "maxMs": 96.66370000000006
+    },
+    {
+      "name": "collision-detect:500",
+      "medianMs": 11.332699999999932,
+      "minMs": 8.557600000000093,
+      "maxMs": 13.556299999999283
+    },
+    {
+      "name": "collision-system:500",
+      "medianMs": 12.901899999999841,
+      "minMs": 9.679799999999886,
+      "maxMs": 18.84810000000016
+    },
+    {
+      "name": "collision-detect:2000",
+      "medianMs": 59.538800000000265,
+      "minMs": 48.76969999999983,
+      "maxMs": 74.50810000000001
+    },
+    {
+      "name": "collision-system:2000",
+      "medianMs": 63.5603000000001,
+      "minMs": 56.54560000000038,
+      "maxMs": 70.54069999999956
+    },
+    {
+      "name": "query-frame:1000x30:rare",
+      "medianMs": 2.0273000000006505,
+      "minMs": 1.6472999999996318,
+      "maxMs": 3.733900000000176
+    },
+    {
+      "name": "query-frame:1000x30:all",
+      "medianMs": 172.41289999999935,
+      "minMs": 144.9984000000004,
+      "maxMs": 196.42779999999948
+    },
+    {
+      "name": "signal-object-write:enemies=10",
+      "medianMs": 1.1710000000002765,
+      "minMs": 1.0807000000004336,
+      "maxMs": 1.5697000000000116
+    },
+    {
+      "name": "legacy-state-update:enemies=10",
+      "medianMs": 1.0666999999994005,
+      "minMs": 0.7202999999990425,
+      "maxMs": 1.606100000000879
+    },
+    {
+      "name": "signal-object-write:enemies=200",
+      "medianMs": 12.118599999999788,
+      "minMs": 8.242599999999584,
+      "maxMs": 17.093800000000556
+    },
+    {
+      "name": "legacy-state-update:enemies=200",
+      "medianMs": 11.01929999999993,
+      "minMs": 8.396899999999732,
+      "maxMs": 15.013899999999921
+    },
+    {
+      "name": "legacy-input-snapshot:600-ticks",
+      "medianMs": 2.726599999999962,
+      "minMs": 1.3220000000001164,
+      "maxMs": 3.5702999999994063
+    },
+    {
+      "name": "computed-unchanged:50-effects",
+      "medianMs": 0.856499999999869,
+      "minMs": 0.6126000000003842,
+      "maxMs": 1.3204999999998108
+    },
+    {
+      "name": "each-200:swap-two",
+      "medianMs": 35.47259999999915,
+      "minMs": 16.984300000000076,
+      "maxMs": 55.34139999999934
+    },
+    {
+      "name": "each-200:reverse",
+      "medianMs": 41.06970000000001,
+      "minMs": 28.684399999998277,
+      "maxMs": 58.178399999998874
+    },
+    {
+      "name": "each-200:rename-one",
+      "medianMs": 32.5091999999986,
+      "minMs": 20.076999999999316,
+      "maxMs": 41.02589999999873
+    }
+  ]
+}
