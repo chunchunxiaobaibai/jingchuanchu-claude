@@ -1,0 +1,19 @@
+<section class="result-page">
+  <p class="eyebrow">本局结算</p>
+  <h1>{{ levelTitle }}</h1>
+  <dl class="score">
+    <div>
+      <dt>本局得分</dt>
+      <dd>{{ score }}</dd>
+    </div>
+    <div>
+      <dt>历史最高</dt>
+      <dd>{{ best }}</dd>
+    </div>
+  </dl>
+  <div class="actions">
+    <button type="button" @click="retry()">重玩本关</button>
+    <button type="button" class="ghost" @click="levels()">选择关卡</button>
+    <button type="button" class="ghost" @click="home()">返回首页</button>
+  </div>
+</section>

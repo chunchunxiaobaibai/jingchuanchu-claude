@@ -63,6 +63,7 @@ export interface ViewDefinition<
   readonly $scope?: string;
   readonly $source?: string;
 }
+/** @deprecated 下一版本起改用 `@xiaobaibaifqy/jingchuanchu-app/application` 的 `defineComponent`；旧行为不变，移除时间由发布任务决定。 见 docs/development/migrating-to-application.md。 */
 export function defineView<
   S,
   C extends object,
@@ -71,6 +72,7 @@ export function defineView<
 >(definition: ViewDefinition<S, C, P, L>): ViewDefinition<S, C, P, L> {
   return Object.freeze(definition);
 }
+/** @deprecated 改用 `defineComponent` 的 `inputs` 与模板 `:input-name` 传值。 见 docs/development/migrating-to-application.md。 */
 export function viewInputs<S, C extends object, P, L>(
   view: ViewDefinition<S, C, P, L>,
   value: NoInfer<P>,
@@ -78,6 +80,7 @@ export function viewInputs<S, C extends object, P, L>(
 ): ViewInput {
   return { view, value, ...(ref === undefined ? {} : { ref }) };
 }
+/** @deprecated 新组件模型报告 `ComponentError`。 见 docs/development/migrating-to-application.md。 */
 export class ViewError extends Error {
   constructor(
     readonly source: string,
@@ -118,6 +121,7 @@ function same(a: unknown, b: unknown): boolean {
   );
 }
 const managedViews = new WeakSet<Element>();
+/** @deprecated 改用 application 入口的 `mountComponent`，或由 `mountApplication` 挂载。 见 docs/development/migrating-to-application.md。 */
 export function mountView<S, C extends object, P, L>(
   host: Element,
   definition: ViewDefinition<S, C, P, L>,

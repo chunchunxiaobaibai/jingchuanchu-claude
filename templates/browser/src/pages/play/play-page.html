@@ -1,0 +1,38 @@
+<section class="play-page">
+  <header class="play-head">
+    <h1>{{ levelTitle }}</h1>
+    <span>收集目标：{{ coinTarget }} 枚</span>
+  </header>
+  <div class="play-stage">
+    <game-canvas
+      :scene="scene"
+      :options="canvasOptions"
+      @ready="onReady($event)"
+      @status-changed="onStatus($event)"
+    ></game-canvas>
+    <play-hud
+      :score="score"
+      :time="time"
+      :paused="paused"
+      :started="started"
+      :pause-url="pauseUrl"
+      @pause="togglePause()"
+      @restart="restart()"
+    ></play-hud>
+    <template when="!started">
+      <div class="overlay start-panel">
+        <h2>{{ levelTitle }}</h2>
+        <p>方向键或 WASD 移动，碰到金币即可收集。首次开始会解锁音频。</p>
+        <button type="button" :disabled="loading" @click="startGame()">
+          {{ loading ? '准备资源…' : '开始' }}
+        </button>
+      </div>
+    </template>
+    <template when="error">
+      <div class="overlay error-panel">
+        <p>{{ error }}</p>
+        <button type="button" @click="retry()">重试资源加载</button>
+      </div>
+    </template>
+  </div>
+</section>

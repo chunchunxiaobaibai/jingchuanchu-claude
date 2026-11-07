@@ -1,0 +1,28 @@
+{
+  "measuredAt": "2026-10-17T10:19:44.289Z",
+  "browser": "Google Chrome via Playwright",
+  "build": {
+    "defaultBytes": 144553,
+    "forestBytes": 144551,
+    "defaultMiB": 0.14,
+    "forestMiB": 0.14
+  },
+  "frames": {
+    "count": 180,
+    "average": 16.665555555555557,
+    "p95": 16.800000000000182,
+    "min": 16.399999999999636,
+    "max": 17
+  },
+  "heap": {
+    "beforeBytes": 3632652,
+    "afterBytes": 4359608,
+    "deltaBytes": 726956,
+    "beforeMiB": 3.46,
+    "afterMiB": 4.16
+  },
+  "scale": {
+    "levelOneEntities": 6,
+    "note": "第一关 1 个玩家 + 5 枚金币；未做大规模实体压力场景。"
+  }
+}

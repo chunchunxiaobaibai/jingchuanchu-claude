@@ -18,7 +18,7 @@ npm install
 npm run dev
 ```
 
-随后可用 `npm run generate -- view score-panel`、`npm run generate -- scene menu` 创建功能，`npm run build` 打包游戏。无需编译引擎或登录 npm；开发依赖仍需下载或已有缓存。迁移独立游戏时保留其引用的 tgz，或按 [应用套件手册](docs/development/application-suite.md) 保存到 vendor。
+随后可用 `npm run generate -- page settings --route /settings`、`npm run generate -- component hud --page play` 创建功能，`npm run build` 打包游戏。无需编译引擎或登录 npm；开发依赖仍需下载或已有缓存。迁移独立游戏时保留其引用的 tgz，或按 [应用套件手册](docs/development/application-suite.md) 保存到 vendor。新的默认项目模型与旧命令对照见 [迁移指南](docs/development/migrating-to-application.md)。
 
 ## 从源码构建
 

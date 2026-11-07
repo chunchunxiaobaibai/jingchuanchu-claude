@@ -8,4 +8,6 @@ playwright-report/
 .npmrc
 *.pem
 tests/fixtures/baseline/
+tests/browser/artifacts/
+tests/browser/test-results/
 AGENTS.md

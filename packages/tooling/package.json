@@ -15,6 +15,11 @@
     "./vite": {
       "types": "./dist/vite.d.ts",
       "default": "./dist/vite.mjs"
+    },
+    "./project-config": {
+      "source": "./project-config.mjs",
+      "types": "./dist/project-config.d.mts",
+      "default": "./dist/project-config.mjs"
     }
   },
   "files": [

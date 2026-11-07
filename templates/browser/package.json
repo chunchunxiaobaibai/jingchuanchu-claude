@@ -1,5 +1,5 @@
 {
-  "name": "my-browser-game",
+  "name": "jingchuanchu-game",
   "private": true,
   "type": "module",
   "license": "MIT",
@@ -12,20 +12,22 @@
     "generate": "jingchuanchu generate"
   },
   "dependencies": {
-    "@xiaobaibaifqy/jingchuanchu-ecs": "*",
-    "@xiaobaibaifqy/jingchuanchu-core": "*",
+    "@xiaobaibaifqy/jingchuanchu-app": "^0.4.0",
+    "@xiaobaibaifqy/jingchuanchu-assets": "*",
     "@xiaobaibaifqy/jingchuanchu-browser": "*",
+    "@xiaobaibaifqy/jingchuanchu-core": "*",
+    "@xiaobaibaifqy/jingchuanchu-ecs": "*",
     "@xiaobaibaifqy/jingchuanchu-input": "*",
-    "@xiaobaibaifqy/jingchuanchu-renderer-2d": "*",
-    "@xiaobaibaifqy/jingchuanchu-app": "^0.4.0"
+    "@xiaobaibaifqy/jingchuanchu-renderer-2d": "*"
   },
   "devDependencies": {
+    "@xiaobaibaifqy/jingchuanchu-tooling": "^0.4.0",
+    "less": "^4.2.0",
     "parse5": "^8.0.0",
     "postcss": "^8.5.0",
     "postcss-selector-parser": "^7.1.0",
     "typescript": "^5.9.0",
-    "vite": "^7.1.0",
-    "@xiaobaibaifqy/jingchuanchu-tooling": "^0.4.0"
+    "vite": "^7.1.0"
   },
   "engines": {
     "node": ">=22.12.0"

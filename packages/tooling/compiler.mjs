@@ -8,6 +8,7 @@ import imports from 'postcss-import';
 import selectorParser from 'postcss-selector-parser';
 import { parseFragment } from 'parse5';
 import MagicString from 'magic-string';
+import { analyzeTemplate, checkTemplateTypes, renderBindings } from './template-check.mjs';
 
 const exists = (file) =>
   access(file).then(
@@ -148,42 +149,54 @@ export async function compileStyle(file, scope) {
   });
   return { css: result.css, dependencies: [...dependencies] };
 }
-/** Transform only imported defineView calls, preserving ordinary TS and its source map. */
+/** Transform imported defineView/defineComponent calls, preserving ordinary TS and its source map. */
 export async function compileViews(code, id) {
   const ast = ts.createSourceFile(id, code, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
-  const names = new Set();
+  const definitions = new Map();
   for (const statement of ast.statements)
     if (
       ts.isImportDeclaration(statement) &&
       ts.isStringLiteral(statement.moduleSpecifier) &&
-      statement.moduleSpecifier.text === '@xiaobaibaifqy/jingchuanchu-app'
+      ['@xiaobaibaifqy/jingchuanchu-app', '@xiaobaibaifqy/jingchuanchu-app/application'].includes(
+        statement.moduleSpecifier.text,
+      )
     ) {
       const bindings = statement.importClause?.namedBindings;
       if (bindings && ts.isNamedImports(bindings))
-        for (const entry of bindings.elements)
-          if ((entry.propertyName ?? entry.name).text === 'defineView') names.add(entry.name.text);
+        for (const entry of bindings.elements) {
+          const imported = (entry.propertyName ?? entry.name).text;
+          if (
+            imported === 'defineView' ||
+            imported === 'defineComponent' ||
+            imported === 'definePage'
+          )
+            definitions.set(entry.name.text, imported);
+        }
     }
-  if (!names.size) return null;
+  if (!definitions.size) return null;
   const calls = [];
   function visit(node) {
     if (
       ts.isCallExpression(node) &&
       ts.isIdentifier(node.expression) &&
-      names.has(node.expression.text)
+      definitions.has(node.expression.text)
     ) {
       const object = node.arguments[0];
       if (!object || !ts.isObjectLiteralExpression(object))
-        throw new Error(`${id}: defineView requires an object literal`);
-      calls.push(object);
+        throw new Error(
+          `${id}: ${definitions.get(node.expression.text)} requires an object literal`,
+        );
+      calls.push({ object, kind: definitions.get(node.expression.text), call: node });
     }
     ts.forEachChild(node, visit);
   }
   visit(ast);
   const output = new MagicString(code),
     resources = [],
-    dependencies = new Set();
+    dependencies = new Set(),
+    typeChecks = [];
   for (let index = 0; index < calls.length; index++) {
-    const object = calls[index];
+    const { object, kind, call } = calls[index];
     for (const prop of object.properties)
       if (ts.isSpreadAssignment(prop))
         throw new Error(`${id}: spread metadata cannot be checked statically`);
@@ -196,13 +209,22 @@ export async function compileViews(code, id) {
     if (!(await exists(template))) throw new Error(`${id}: Missing component template ${template}`);
     const html = await readFile(template, 'utf8');
     dependencies.add(template);
-    validateTemplate(
-      html,
-      template,
-      Object.fromEntries(
-        ['text', 'attributes', 'actions'].map((name) => [name, bindingNames(object, name, id)]),
-      ),
-    );
+    let compiledHtml = html,
+      bindingSource;
+    if (kind === 'defineView') {
+      validateTemplate(
+        html,
+        template,
+        Object.fromEntries(
+          ['text', 'attributes', 'actions'].map((name) => [name, bindingNames(object, name, id)]),
+        ),
+      );
+    } else {
+      const analyzed = analyzeTemplate(html, template);
+      compiledHtml = analyzed.html;
+      bindingSource = renderBindings(analyzed.bindings);
+      typeChecks.push({ callText: call.getText(ast), expressions: analyzed.expressions });
+    }
     let style = styleUrl ? resolve(dirname(id), styleUrl) : undefined;
     if (style && !(await exists(style))) throw new Error(`${id}: Missing component style ${style}`);
     if (!styleUrl) {
@@ -230,9 +252,10 @@ export async function compileViews(code, id) {
     }
     output.appendLeft(
       object.getStart(ast) + 1,
-      `$template:${JSON.stringify(html)},$style:${styleExpression},$scope:${JSON.stringify(scope)},$source:${JSON.stringify(id)},`,
+      `$template:${JSON.stringify(compiledHtml)},$style:${styleExpression},$scope:${JSON.stringify(scope)},$source:${JSON.stringify(id)},${bindingSource ? `$bindings:${bindingSource},` : ''}`,
     );
   }
+  checkTemplateTypes(code, id, typeChecks);
   return {
     code: output.toString(),
     map: output.generateMap({ hires: true, source: id, includeContent: true }),

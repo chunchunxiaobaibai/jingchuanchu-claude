@@ -27,7 +27,7 @@ window.addEventListener('pagehide', () => engine.dispose(), { once: true });
 
 ## 0.4.0 扩展
 
-原 browserModule/runBrowser 调用方式保留。新的相机、精灵和场景能力在 renderer-2d/features 与 core/scenes 中按需接入，不需要让浏览器循环依赖联网。
+原 browserModule/runBrowser 调用方式保留。下一版本新增 createFrameLoop，runBrowser 与应用层 GameCanvas 共用这一帧调度。新的相机、精灵和场景能力在 renderer-2d/features 与 core/scenes 中按需接入，不需要让浏览器循环依赖联网。
 
 本仓库 0.4.0 尚未上传 npm，新增能力请使用本地 tgz 或分发套件；公共包当前为 0.3.0。完整契约见分发套件 `docs/development/extensions-0.4.md`。
 

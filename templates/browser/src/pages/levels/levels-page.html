@@ -1,0 +1,16 @@
+<section class="levels-page">
+  <h1>选择关卡</h1>
+  <p>完成一关后会解锁下一关。</p>
+  <ul class="level-list">
+    <template each="level of levels" key="level.id">
+      <li :class="{ locked: !level.unlocked }">
+        <a
+          :href="level.unlocked ? '#/play/' + level.id : '#/levels'"
+          :aria-disabled="!level.unlocked"
+          >{{ level.title }}</a
+        >
+        <span>{{ level.unlocked ? '目标 ' + level.target + ' 枚金币' : '未解锁' }}</span>
+      </li>
+    </template>
+  </ul>
+</section>

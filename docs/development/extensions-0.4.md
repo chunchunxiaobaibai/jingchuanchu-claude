@@ -121,6 +121,8 @@ Collider2D 支持 rect（width,height）与 circle（radius），可设 offsetX/
 
 rect 按世界 AABB 检测；旋转后的矩形使用包围盒。非均匀缩放/剪切后的 circle 使用保守包围圆，可能产生额外命中。边界接触算碰撞。采用沿 X 轴排序筛选，密集重叠时仍可能退化为 O(n²)，不是刚体物理。
 
+下一版本（未发布）：detectCollisions(world, { cellSize }) 与 collisionModule({ cellSize }) 可选启用均匀网格宽阶段，cellSize 为格子边长（世界单位，正有限数），建议取常见碰撞体尺寸的 2 倍左右。默认仍用 X 轴排序筛选；实测网格在均匀、密集或含大碰撞体的分布下更慢，只在碰撞体集中在窄竖条（X 范围远小于 Y 范围）时明显更快，测量见 [性能记录](../performance/README.md)。两种方式返回相同的碰撞对，顺序都按 minX 排名，回调顺序不受影响。
+
 collisionModule 的 onEnter/onStay/onExit 在固定步触发。销毁或分离产生退出，pair 内包含 Entity handle，使用前检查 World.isAlive；复用 index 的新 generation 不会误判为原碰撞。检测不自动移动实体或提供刚体响应。
 
 ## 网络可选策略

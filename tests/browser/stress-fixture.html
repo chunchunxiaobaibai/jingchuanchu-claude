@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>镜川初 0.5 压力测试</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: system-ui, sans-serif;
+        background: #1a1a1a;
+        color: #fff;
+      }
+      #hud {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        padding: 12px;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        gap: 20px;
+        z-index: 10;
+      }
+      #list-container {
+        position: fixed;
+        top: 60px;
+        right: 0;
+        width: 300px;
+        height: calc(100% - 60px);
+        background: rgba(0, 0, 0, 0.9);
+        overflow-y: auto;
+        z-index: 5;
+      }
+      .list-item {
+        padding: 8px 12px;
+        border-bottom: 1px solid #333;
+        font-size: 13px;
+      }
+      #canvas {
+        display: block;
+        background: #0a0a0a;
+      }
+      #metrics {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 300px;
+        padding: 8px;
+        background: rgba(0, 0, 0, 0.8);
+        font-size: 12px;
+        font-family: monospace;
+        z-index: 10;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="hud">
+      <div>FPS: <span id="fps">--</span></div>
+      <div>实体: <span id="entity-count">--</span></div>
+      <div>分数: <span id="score">0</span></div>
+      <div>状态: <span id="status">运行中</span></div>
+    </div>
+    <div id="list-container"></div>
+    <canvas id="canvas"></canvas>
+    <div id="metrics">
+      帧耗时 p50: <span id="p50">--</span>ms | p95: <span id="p95">--</span>ms | 堆:
+      <span id="heap">--</span>MB | 长任务: <span id="long-tasks">0</span>
+    </div>
+    <script type="module">
+      // 性能采集
+      window.perfData = {
+        frameTimes: [],
+        longTasks: 0,
+        heapSamples: [],
+      };
+
+      // 长任务观察（PerformanceObserver）
+      if (window.PerformanceObserver) {
+        try {
+          const observer = new PerformanceObserver((list) => {
+            for (const entry of list.getEntries()) {
+              if (entry.duration > 50) {
+                window.perfData.longTasks++;
+              }
+            }
+          });
+          observer.observe({ entryTypes: ['longtask'] });
+        } catch (e) {
+          console.warn('Long task observer not supported:', e);
+        }
+      }
+
+      // 简化的引擎模拟（不依赖包，直接绘制）
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+
+      function resizeCanvas() {
+        const w = window.innerWidth - 300;
+        const h = window.innerHeight;
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+        ctx.scale(dpr, dpr);
+      }
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+
+      // 2000 个精灵实体
+      const sprites = [];
+      const spriteCount = 2000;
+      const w = canvas.width / dpr;
+      const h = canvas.height / dpr;
+
+      for (let i = 0; i < spriteCount; i++) {
+        sprites.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (Math.random() - 0.5) * 100,
+          vy: (Math.random() - 0.5) * 100,
+          size: 8 + Math.random() * 8,
+          color: `hsl(${Math.random() * 360}, 70%, 60%)`,
+          rotation: Math.random() * Math.PI * 2,
+          rotSpeed: (Math.random() - 0.5) * 2,
+        });
+      }
+
+      // 500 个碰撞体（混合圆形和矩形）
+      const colliders = [];
+      const colliderCount = 500;
+
+      for (let i = 0; i < colliderCount; i++) {
+        const isCircle = i % 2 === 0;
+        colliders.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (Math.random() - 0.5) * 80,
+          vy: (Math.random() - 0.5) * 80,
+          kind: isCircle ? 'circle' : 'rect',
+          radius: isCircle ? 10 + Math.random() * 15 : undefined,
+          width: !isCircle ? 15 + Math.random() * 20 : undefined,
+          height: !isCircle ? 15 + Math.random() * 20 : undefined,
+          color: '#ff6b6b',
+        });
+      }
+
+      // 200 行列表
+      const listContainer = document.getElementById('list-container');
+      const listData = Array.from({ length: 200 }, (_, i) => ({
+        id: i,
+        name: `实体 ${i}`,
+        value: Math.floor(Math.random() * 1000),
+      }));
+
+      function renderList() {
+        listContainer.innerHTML = listData
+          .map((item) => `<div class="list-item">${item.name}: ${item.value}</div>`)
+          .join('');
+      }
+      renderList();
+
+      // HUD 状态
+      let score = 0;
+      let frameCount = 0;
+      let lastFpsTime = performance.now();
+      let currentFps = 0;
+
+      // 主循环
+      let lastTime = performance.now();
+
+      function gameLoop(time) {
+        const delta = Math.min((time - lastTime) / 1000, 0.1);
+        lastTime = time;
+
+        const frameStart = performance.now();
+
+        // 更新精灵
+        for (const sprite of sprites) {
+          sprite.x += sprite.vx * delta;
+          sprite.y += sprite.vy * delta;
+          sprite.rotation += sprite.rotSpeed * delta;
+
+          if (sprite.x < 0 || sprite.x > w) sprite.vx *= -1;
+          if (sprite.y < 0 || sprite.y > h) sprite.vy *= -1;
+        }
+
+        // 更新碰撞体
+        for (const col of colliders) {
+          col.x += col.vx * delta;
+          col.y += col.vy * delta;
+
+          if (col.x < 0 || col.x > w) col.vx *= -1;
+          if (col.y < 0 || col.y > h) col.vy *= -1;
+        }
+
+        // 简单碰撞检测（X轴扫描）
+        const sorted = [...colliders].sort((a, b) => a.x - b.x);
+        let collisionCount = 0;
+        for (let i = 0; i < sorted.length; i++) {
+          const a = sorted[i];
+          for (let j = i + 1; j < sorted.length; j++) {
+            const b = sorted[j];
+            const maxReach = Math.max(
+              a.radius || Math.max(a.width, a.height) || 0,
+              b.radius || Math.max(b.width, b.height) || 0,
+            );
+            if (b.x - a.x > maxReach * 2) break;
+
+            const dx = b.x - a.x;
+            const dy = b.y - a.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < maxReach) {
+              collisionCount++;
+            }
+          }
+        }
+
+        // 绘制
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(0, 0, w, h);
+
+        // 绘制精灵（带旋转）
+        for (const sprite of sprites) {
+          ctx.save();
+          ctx.translate(sprite.x, sprite.y);
+          ctx.rotate(sprite.rotation);
+          ctx.fillStyle = sprite.color;
+          ctx.fillRect(-sprite.size / 2, -sprite.size / 2, sprite.size, sprite.size);
+          ctx.restore();
+        }
+
+        // 绘制碰撞体
+        ctx.strokeStyle = '#ff6b6b';
+        ctx.lineWidth = 2;
+        for (const col of colliders) {
+          ctx.beginPath();
+          if (col.kind === 'circle') {
+            ctx.arc(col.x, col.y, col.radius, 0, Math.PI * 2);
+          } else {
+            ctx.rect(col.x - col.width / 2, col.y - col.height / 2, col.width, col.height);
+          }
+          ctx.stroke();
+        }
+
+        // 更新 HUD（每帧）
+        score += collisionCount;
+        document.getElementById('score').textContent = score;
+        document.getElementById('entity-count').textContent = spriteCount + colliderCount;
+
+        // 每 10 帧更新列表（模拟真实游戏 HUD）
+        if (frameCount % 10 === 0) {
+          for (let i = 0; i < 10; i++) {
+            const idx = Math.floor(Math.random() * listData.length);
+            listData[idx].value = Math.floor(Math.random() * 1000);
+          }
+          renderList();
+        }
+
+        // FPS 计算
+        frameCount++;
+        if (time - lastFpsTime > 1000) {
+          currentFps = Math.round((frameCount * 1000) / (time - lastFpsTime));
+          document.getElementById('fps').textContent = currentFps;
+          frameCount = 0;
+          lastFpsTime = time;
+        }
+
+        // 记录帧耗时
+        const frameTime = performance.now() - frameStart;
+        window.perfData.frameTimes.push(frameTime);
+
+        // 采集堆内存（每 30 帧）
+        if (performance.memory && frameCount % 30 === 0) {
+          window.perfData.heapSamples.push(performance.memory.usedJSHeapSize / 1048576);
+        }
+
+        // 更新指标显示（每 60 帧）
+        if (window.perfData.frameTimes.length % 60 === 0 && window.perfData.frameTimes.length > 0) {
+          const sorted = [...window.perfData.frameTimes].sort((a, b) => a - b);
+          const p50 = sorted[Math.floor(sorted.length * 0.5)];
+          const p95 = sorted[Math.floor(sorted.length * 0.95)];
+          document.getElementById('p50').textContent = p50.toFixed(2);
+          document.getElementById('p95').textContent = p95.toFixed(2);
+          document.getElementById('long-tasks').textContent = window.perfData.longTasks;
+
+          if (window.perfData.heapSamples.length > 0) {
+            const avgHeap =
+              window.perfData.heapSamples.reduce((a, b) => a + b, 0) /
+              window.perfData.heapSamples.length;
+            document.getElementById('heap').textContent = avgHeap.toFixed(1);
+          }
+        }
+
+        requestAnimationFrame(gameLoop);
+      }
+
+      requestAnimationFrame(gameLoop);
+
+      // 暴露给 Playwright 的采集接口
+      window.getMetrics = () => {
+        const sorted = [...window.perfData.frameTimes].sort((a, b) => a - b);
+        const p50 = sorted[Math.floor(sorted.length * 0.5)] || 0;
+        const p95 = sorted[Math.floor(sorted.length * 0.95)] || 0;
+        const avgHeap =
+          window.perfData.heapSamples.length > 0
+            ? window.perfData.heapSamples.reduce((a, b) => a + b, 0) /
+              window.perfData.heapSamples.length
+            : 0;
+
+        return {
+          frameTimes: {
+            p50: parseFloat(p50.toFixed(2)),
+            p95: parseFloat(p95.toFixed(2)),
+            count: window.perfData.frameTimes.length,
+          },
+          heap: {
+            avgMB: parseFloat(avgHeap.toFixed(1)),
+            samples: window.perfData.heapSamples.length,
+          },
+          longTasks: window.perfData.longTasks,
+          fps: currentFps,
+        };
+      };
+
+      console.log('压力测试已启动：2000 精灵 + 500 碰撞体 + 200 行列表');
+    </script>
+  </body>
+</html>

@@ -1,0 +1,112 @@
+{
+  "config": {
+    "argv": [
+      "D:\\nvm_base\\nodejs\\node.exe",
+      "D:\\aiproject\\claude-desktop\\jingchuanchu\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "stress.spec.ts",
+      "--config=playwright.config.ts"
+    ],
+    "configFile": "D:\\aiproject\\claude-desktop\\jingchuanchu\\tests\\browser\\playwright.config.ts",
+    "rootDir": "D:/aiproject/claude-desktop/jingchuanchu/tests/browser",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {},
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "D:/aiproject/claude-desktop/jingchuanchu/tests/browser/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "",
+        "name": "",
+        "testDir": "D:/aiproject/claude-desktop/jingchuanchu/tests/browser",
+        "testIgnore": [],
+        "testMatch": ["*.spec.ts"],
+        "timeout": 60000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "D:\\aiproject\\claude-desktop\\jingchuanchu\\tests\\browser\\test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "name": "",
+        "testDir": "D:\\aiproject\\claude-desktop\\jingchuanchu\\tests\\browser",
+        "snapshotDir": "D:\\aiproject\\claude-desktop\\jingchuanchu\\tests\\browser",
+        "testIgnore": [],
+        "testMatch": "*.spec.ts",
+        "timeout": 60000,
+        "use": {
+          "baseURL": "http://127.0.0.1:4175",
+          "headless": true,
+          "channel": "chrome",
+          "viewport": {
+            "width": 1280,
+            "height": 800
+          },
+          "screenshot": "only-on-failure",
+          "trace": "retain-on-failure",
+          "locale": "zh-CN"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": ""
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      ["list", null],
+      [
+        "html",
+        {
+          "outputFolder": "D:\\aiproject\\claude-desktop\\jingchuanchu\\tests\\browser\\report/html",
+          "open": "never"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "D:\\aiproject\\claude-desktop\\jingchuanchu\\tests\\browser\\report/results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [],
+  "errors": [
+    {
+      "message": "Error: Process from config.webServer was not able to start. Exit code: 1",
+      "stack": "Error: Process from config.webServer was not able to start. Exit code: 1"
+    }
+  ],
+  "stats": {
+    "startTime": "2026-11-07T08:59:40.730Z",
+    "duration": 994.8389999999999,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

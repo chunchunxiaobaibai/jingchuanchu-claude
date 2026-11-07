@@ -1,1 +1,14 @@
-{ "preset": "singleplayer", "style": "css" }
+{
+  "schemaVersion": 2,
+  "profile": "application",
+  "preset": "singleplayer",
+  "style": "less",
+  "paths": {
+    "app": "src/app",
+    "pages": "src/pages",
+    "game": "src/game",
+    "components": "src/components",
+    "themes": "src/themes",
+    "account": "src/account"
+  }
+}

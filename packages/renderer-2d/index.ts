@@ -1,13 +1,31 @@
-import type { World } from '@xiaobaibaifqy/jingchuanchu-ecs';
+import type { Entity, World } from '@xiaobaibaifqy/jingchuanchu-ecs';
 import { Position2D, Shape2D, type Point, type Stroke } from './components.js';
 export { Position2D, Shape2D, type Point, type Stroke } from './components.js';
-import { Transform2D, Sprite2D, Camera2D, createTransformResolver, multiply } from './features.js';
+import {
+  Transform2D,
+  Sprite2D,
+  Camera2D,
+  createTransformResolver,
+  type Sprite,
+} from './features.js';
+type Shape = NonNullable<(typeof Shape2D)['__type']>;
+interface DrawItem {
+  entity: Entity | undefined;
+  layer: number;
+  shape: Shape | undefined;
+  position: Point | undefined;
+  sprite: Sprite | undefined;
+}
+const origin: Point = Object.freeze({ x: 0, y: 0 });
 export class Canvas2D {
   readonly context: CanvasRenderingContext2D;
   private logicalWidth: number;
   private logicalHeight: number;
   private pixelRatio = 1;
   private initialized = false;
+  // Reused across frames; references are cleared after each draw so they retain nothing.
+  private readonly drawPool: DrawItem[] = [];
+  private readonly drawOrder: DrawItem[] = [];
   get width(): number {
     return this.logicalWidth;
   }
@@ -90,67 +108,106 @@ export class Canvas2D {
   drawWorld(world: World, camera?: Camera2D): void {
     const resolve = createTransformResolver(world);
     const view = camera?.matrix;
-    const shapes = Array.from(world.query(Position2D, Shape2D), (entity) => ({
-      entity,
-      shape: world.require(entity, Shape2D),
-      position: world.require(entity, Position2D),
-    }));
+    const pool = this.drawPool,
+      order = this.drawOrder;
+    let count = 0;
+    const add = (
+      entity: Entity,
+      layer: number,
+      shape: Shape | undefined,
+      position: Point | undefined,
+      sprite: Sprite | undefined,
+    ): void => {
+      let item = pool[count];
+      if (!item) pool.push((item = { entity, layer, shape, position, sprite }));
+      else {
+        item.entity = entity;
+        item.layer = layer;
+        item.shape = shape;
+        item.position = position;
+        item.sprite = sprite;
+      }
+      order[count++] = item;
+    };
+    for (const entity of world.query(Position2D, Shape2D)) {
+      const shape = world.require(entity, Shape2D);
+      add(entity, shape.layer, shape, world.require(entity, Position2D), undefined);
+    }
     for (const entity of world.query(Transform2D, Shape2D))
-      if (!world.has(entity, Position2D))
-        shapes.push({ entity, shape: world.require(entity, Shape2D), position: { x: 0, y: 0 } });
-    const sprites = Array.from(world.query(Sprite2D), (entity) => ({
-      entity,
-      sprite: world.require(entity, Sprite2D),
-    }));
-    const items = [
-      ...shapes.map((item) => ({ ...item, layer: item.shape.layer })),
-      ...sprites.map((item) => ({ ...item, layer: item.sprite.layer ?? 0 })),
-    ].sort((a, b) => a.layer - b.layer);
-    for (const item of items) {
-      const ctx = this.context;
-      const transformed = !!camera || world.has(item.entity, Transform2D) || 'sprite' in item;
-      if (transformed) {
-        const matrix = view ? multiply(view, resolve(item.entity)) : resolve(item.entity);
-        ctx.save();
-        ctx.transform(...matrix);
+      if (!world.has(entity, Position2D)) {
+        const shape = world.require(entity, Shape2D);
+        add(entity, shape.layer, shape, origin, undefined);
       }
-      try {
-        if ('shape' in item) {
-          const { shape, position } = item;
-          const x = transformed ? 0 : position.x,
-            y = transformed ? 0 : position.y;
-          ctx.fillStyle = shape.color;
-          if (shape.kind === 'rect') ctx.fillRect(x, y, shape.width, shape.height);
-          else {
-            ctx.beginPath();
-            ctx.arc(x, y, shape.width / 2, 0, Math.PI * 2);
-            ctx.fill();
-          }
-        } else {
-          const sprite = item.sprite;
-          if (sprite.width <= 0 || sprite.height <= 0) continue;
-          ctx.globalAlpha = Math.max(0, Math.min(1, sprite.opacity ?? 1));
-          ctx.scale(sprite.flipX ? -1 : 1, sprite.flipY ? -1 : 1);
-          const x = -(sprite.anchorX ?? 0) * sprite.width,
-            y = -(sprite.anchorY ?? 0) * sprite.height;
-          if (sprite.frame) {
-            const frame = sprite.frame;
-            ctx.drawImage(
-              sprite.image,
-              frame.x,
-              frame.y,
-              frame.width,
-              frame.height,
-              x,
-              y,
-              sprite.width,
-              sprite.height,
+    for (const entity of world.query(Sprite2D)) {
+      const sprite = world.require(entity, Sprite2D);
+      add(entity, sprite.layer ?? 0, undefined, undefined, sprite);
+    }
+    order.length = count;
+    // Stable sort keeps shapes before sprites and query order within a layer.
+    order.sort((a, b) => a.layer - b.layer);
+    const ctx = this.context;
+    try {
+      for (const item of order) {
+        const entity = item.entity!,
+          shape = item.shape,
+          sprite = item.sprite;
+        const transformed = !!view || !!sprite || world.has(entity, Transform2D);
+        if (transformed) {
+          const m = resolve(entity);
+          ctx.save();
+          if (view)
+            ctx.transform(
+              view[0] * m[0] + view[2] * m[1],
+              view[1] * m[0] + view[3] * m[1],
+              view[0] * m[2] + view[2] * m[3],
+              view[1] * m[2] + view[3] * m[3],
+              view[0] * m[4] + view[2] * m[5] + view[4],
+              view[1] * m[4] + view[3] * m[5] + view[5],
             );
-          } else ctx.drawImage(sprite.image, x, y, sprite.width, sprite.height);
+          else ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
         }
-      } finally {
-        if (transformed) ctx.restore();
+        try {
+          if (shape) {
+            const x = transformed ? 0 : item.position!.x,
+              y = transformed ? 0 : item.position!.y;
+            ctx.fillStyle = shape.color;
+            if (shape.kind === 'rect') ctx.fillRect(x, y, shape.width, shape.height);
+            else {
+              ctx.beginPath();
+              ctx.arc(x, y, shape.width / 2, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          } else if (sprite) {
+            if (sprite.width <= 0 || sprite.height <= 0) continue;
+            ctx.globalAlpha = Math.max(0, Math.min(1, sprite.opacity ?? 1));
+            ctx.scale(sprite.flipX ? -1 : 1, sprite.flipY ? -1 : 1);
+            const x = -(sprite.anchorX ?? 0) * sprite.width,
+              y = -(sprite.anchorY ?? 0) * sprite.height;
+            const frame = sprite.frame;
+            if (frame)
+              ctx.drawImage(
+                sprite.image,
+                frame.x,
+                frame.y,
+                frame.width,
+                frame.height,
+                x,
+                y,
+                sprite.width,
+                sprite.height,
+              );
+            else ctx.drawImage(sprite.image, x, y, sprite.width, sprite.height);
+          }
+        } finally {
+          if (transformed) ctx.restore();
+        }
       }
+    } finally {
+      for (let i = 0; i < count; i++) {
+        const item = pool[i]!;
+        item.entity = item.shape = item.position = item.sprite = undefined;
+      }
+      order.length = 0;
     }
   }
 }

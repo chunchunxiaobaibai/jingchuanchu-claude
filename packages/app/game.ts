@@ -28,6 +28,7 @@ export interface InputDefinition<I, C extends object> {
     enabled(): boolean;
   }): void;
 }
+/** @deprecated 改用 application 入口的 `defineActions` 与 `createInputActions`。 见 docs/development/migrating-to-application.md。 */
 export function defineInput<I, C extends object>(
   definition: InputDefinition<I, C>,
 ): InputDefinition<I, C> {
@@ -44,6 +45,7 @@ export interface SceneDefinition<S, C extends object, I = Record<string, never>>
   onPause?(): void;
   onResume?(): void;
 }
+/** @deprecated 改用 application 入口的 `defineGameScene`，由页面内 `GameCanvas` 承载。 见 docs/development/migrating-to-application.md。 */
 export function defineScene<S, C extends object, I = Record<string, never>>(
   definition: SceneDefinition<S, C, I>,
 ): SceneDefinition<S, C, I> {
@@ -67,6 +69,7 @@ export interface GameDefinition<S, C extends object, I = Record<string, never>> 
   setup?(context: ApplicationContext<S, C, I>): void;
   onError?(error: unknown): void;
 }
+/** @deprecated 改用 application 入口的 `defineApplication`、`definePage` 与 `GameCanvas`；旧行为不变，移除时间由发布任务决定。 见 docs/development/migrating-to-application.md。 */
 export function defineGame<S, C extends object, I = Record<string, never>>(
   definition: GameDefinition<S, C, I>,
 ): GameDefinition<S, C, I> {
@@ -81,6 +84,7 @@ export interface GameApplication<S, C extends object, I, P> {
   dispose(): void;
 }
 const applications = new WeakSet<Element>();
+/** @deprecated 改用 application 入口的 `mountApplication`。 见 docs/development/migrating-to-application.md。 */
 export async function mountGame<S, C extends object, I, P, L>(
   host: Element,
   root: ViewDefinition<S, C, P, L>,
@@ -238,6 +242,7 @@ export async function mountGame<S, C extends object, I, P, L>(
     throw error;
   }
 }
+/** @deprecated 改用 application 入口的 `bootstrapApplication`。 见 docs/development/migrating-to-application.md。 */
 export async function bootstrapGame<S, C extends object, I, P, L>(
   root: ViewDefinition<S, C, P, L>,
   game: GameDefinition<S, C, I>,

@@ -23,7 +23,12 @@
     "benchmark:isolated": "tsx --conditions=source scripts/benchmark-isolated.ts",
     "test:distribution:node": "npm run dist:release && tsx scripts/distribution/verify.ts --skip-browser",
     "test:app": "tsx --conditions=source --test tests/app*.test.ts",
-    "test:app:distribution": "tsx scripts/verify-app-suite.ts"
+    "test:app:distribution": "tsx scripts/verify-app-suite.ts",
+    "build:browser": "vite build templates/browser",
+    "build:browser:forest": "node tests/browser/build-forest.mjs",
+    "test:browser": "npm run build:packages && npm run build:browser && npm run build:browser:forest && playwright test -c tests/browser/playwright.config.ts",
+    "test:browser:stress": "playwright test -c tests/browser/stress-playwright.config.ts",
+    "serve:stress": "node tests/browser/serve.mjs tests/browser 4177"
   },
   "dependencies": {
     "@xiaobaibaifqy/jingchuanchu-assets": "^0.4.0",

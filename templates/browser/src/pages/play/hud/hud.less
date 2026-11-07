@@ -1,0 +1,64 @@
+.play-hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0.65rem 0.85rem;
+
+  .stats {
+    display: flex;
+    gap: 1rem;
+    padding: 0.35rem 0.7rem;
+    border-radius: 0.7rem;
+    background: rgba(255, 255, 255, 0.82);
+    width: fit-content;
+    color: var(--jcc-ink);
+    font-variant-numeric: tabular-nums;
+
+    b {
+      color: var(--jcc-accent);
+      margin-left: 0.2rem;
+    }
+  }
+
+  .actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-left: auto;
+    pointer-events: auto;
+  }
+
+  .text {
+    background: rgba(255, 255, 255, 0.86);
+    color: var(--jcc-ink);
+    border-color: color-mix(in srgb, var(--jcc-ink) 20%, transparent);
+  }
+
+  .pause-panel {
+    pointer-events: auto;
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 0.6rem;
+    background: rgba(31, 42, 38, 0.72);
+    color: #fff;
+    text-align: center;
+    border-radius: 0.9rem;
+
+    h3,
+    p {
+      margin: 0;
+    }
+  }
+
+  &:has(.pause-panel) {
+    .stats,
+    .actions {
+      visibility: hidden;
+    }
+  }
+}

@@ -1,5 +1,13 @@
 # 更新记录
 
+## 未发布
+
+- 新增 browser 包 `createFrameLoop`（帧调度、首帧 0 秒、`maxDelta`、停止即取消请求帧）；`runBrowser` 与 `GameCanvas` 共用。顺带修正两个旧问题：默认驱动的 `dispose()` 未取消已请求帧；系统在帧内调用 `pause()` 后恢复首帧收到整个暂停时长。
+- `drawWorld` 跨帧复用绘制项缓冲，内联相机 × 实体矩阵，变换校验按字段逐项检查；`createTransformResolver` 跳过无父链实体的缓存与循环检测；精灵绘制速度提升。
+- 碰撞检测包围盒由矩阵分量内联计算，碰撞对 key 改为整数，复用索引依靠 handle 身份区分；新增可选均匀网格宽阶段（`detectCollisions(world, { cellSize })`），默认保留 X 轴扫描。
+- `each` 只移动相对顺序改变的行（最长递增子序列），交换两项或单行文字更新不插入其余行。
+- 旧入口（`defineView`、`defineGame`、`mountGame`、`StateStore` 等）标注 `@deprecated`，行为不变，移除时间由发布任务决定。
+
 ## 0.4.0 · GitHub 分发（npm 未发布）
 
 - 新增可选 app 运行包与 tooling 开发包：类型化应用/场景/输入、只读展示快照、父子组件输入、声明式绑定和八个实例生命周期钩子。

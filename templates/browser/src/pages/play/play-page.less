@@ -1,0 +1,62 @@
+.play-page {
+  display: grid;
+  gap: 0.8rem;
+
+  .play-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+
+    h1 {
+      margin: 0;
+      color: var(--jcc-accent);
+      font-size: 1.4rem;
+    }
+
+    span {
+      color: var(--jcc-muted);
+      font-size: 0.9rem;
+    }
+  }
+
+  .play-stage {
+    position: relative;
+    border-radius: 0.9rem;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--jcc-accent) 25%, transparent);
+    background: var(--jcc-background);
+
+    game-canvas {
+      display: block;
+      width: 100%;
+
+      canvas {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-content: center;
+      justify-items: center;
+      gap: 0.7rem;
+      padding: 1rem;
+      text-align: center;
+      background: rgba(31, 42, 38, 0.62);
+      color: #fff;
+
+      h2,
+      p {
+        margin: 0;
+      }
+    }
+
+    .error-panel {
+      background: rgba(110, 32, 32, 0.72);
+    }
+  }
+}

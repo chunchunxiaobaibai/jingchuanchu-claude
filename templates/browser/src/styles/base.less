@@ -1,0 +1,44 @@
+:root {
+  color-scheme: light;
+  font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  background: var(--jcc-background, #f6f1e7);
+  color: var(--jcc-ink, #1f2a26);
+  line-height: 1.5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+button,
+input {
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  border: 1px solid color-mix(in srgb, var(--jcc-accent) 55%, white);
+  border-radius: 0.6rem;
+  background: var(--jcc-accent);
+  color: #fff;
+  padding: 0.45rem 1rem;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+a {
+  color: var(--jcc-accent);
+}

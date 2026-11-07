@@ -77,7 +77,7 @@ test('CLI creates all presets, chooses Less, registers generated references and 
   fixture(async (directory) => {
     for (const preset of ['core', 'server', 'singleplayer', 'client']) {
       const target = join(directory, preset);
-      await createProject(target, { preset, style: 'less' });
+      await createProject(target, { preset, style: 'less', legacy: true });
       const pkg = JSON.parse(await readFile(join(target, 'package.json'), 'utf8'));
       assert.ok(pkg.scripts.build);
       if (preset === 'core')

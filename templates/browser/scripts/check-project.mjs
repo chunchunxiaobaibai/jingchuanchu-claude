@@ -4,10 +4,19 @@ import ts from 'typescript';
 import { parse, parseFragment } from 'parse5';
 import postcss from 'postcss';
 import selectorParser from 'postcss-selector-parser';
+import {
+  APPLICATION_PROFILE,
+  readProjectConfig,
+} from '@xiaobaibaifqy/jingchuanchu-tooling/project-config';
 
 const root = resolve(process.argv[2] ?? '.');
 const errors = [];
 const normalize = (file) => relative(root, file).split(sep).join('/');
+const exists = (file) =>
+  access(file).then(
+    () => true,
+    () => false,
+  );
 function report(file, rule, message, line = 1) {
   errors.push(`${normalize(file)}:${line} [${rule}] ${message}`);
 }
@@ -21,6 +30,138 @@ async function files(directory) {
   return result;
 }
 const sourceFiles = await files(resolve(root, 'src'));
+let project;
+try {
+  project = await readProjectConfig(root);
+} catch (error) {
+  console.error(error.message);
+  process.exit(1);
+}
+function finish() {
+  if (errors.length) {
+    console.error([...new Set(errors)].join('\n'));
+    process.exitCode = 1;
+  } else console.log('Project structure passed');
+}
+if (project.profile === APPLICATION_PROFILE) {
+  await checkApplicationProject(project);
+  finish();
+  process.exit();
+}
+
+function kebab(value) {
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
+}
+function stem(file) {
+  const base = basename(file);
+  if (base.endsWith('.d.ts')) return base.slice(0, -5);
+  return base.replace(/\.[^.]+$/, '');
+}
+async function entries(directory) {
+  try {
+    return await readdir(directory, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+}
+async function checkApplicationProject(config) {
+  const { paths } = config;
+  const src = resolve(root, 'src');
+  const configured = Object.values(paths).map((value) => resolve(root, value));
+  const topLevel = new Set([
+    'main.ts',
+    'env.d.ts',
+    'vite-env.d.ts',
+    'styles',
+    'assets',
+    ...configured
+      .map((value) => relative(src, value).split(sep)[0])
+      .filter((value) => value && !value.startsWith('..')),
+  ]);
+  for (const file of sourceFiles) {
+    const name = normalize(file);
+    const relativeToSrc = relative(src, file).split(sep).join('/');
+    const top = relativeToSrc.split('/')[0];
+    if (!top || !topLevel.has(top)) {
+      report(file, 'file-location', 'File is outside the configured project paths');
+      continue;
+    }
+    const parts = relativeToSrc.split('/');
+    for (const part of parts.slice(0, -1))
+      if (!kebab(part)) report(file, 'file-naming', `Directory must be kebab-case: ${part}`);
+    const fileStem = stem(file);
+    if (
+      name !== 'src/main.ts' &&
+      name !== 'src/env.d.ts' &&
+      name !== 'src/vite-env.d.ts' &&
+      !kebab(fileStem)
+    )
+      report(file, 'file-naming', `File must be kebab-case: ${basename(file)}`);
+  }
+
+  const appDir = resolve(root, paths.app);
+  const appFiles = await entries(appDir);
+  if (appFiles.length) {
+    for (const required of ['app-config.ts', 'app-routes.ts']) {
+      if (!appFiles.some((entry) => entry.isFile() && entry.name === required))
+        report(resolve(appDir, required), 'app-files', `Missing ${required}`);
+    }
+  }
+
+  const componentRoot = resolve(root, paths.components);
+  for (const entry of await entries(componentRoot)) {
+    if (!entry.isDirectory() || entry.name.startsWith('.')) continue;
+    const directory = resolve(componentRoot, entry.name);
+    if (!kebab(entry.name))
+      report(directory, 'file-naming', 'Component directory must be kebab-case');
+    for (const suffix of ['ts', 'html']) {
+      if (!(await exists(resolve(directory, `${entry.name}.${suffix}`))))
+        report(directory, 'component-files', `Missing ${entry.name}.${suffix}`);
+    }
+    const css = await exists(resolve(directory, `${entry.name}.css`));
+    const less = await exists(resolve(directory, `${entry.name}.less`));
+    if (css && less)
+      report(directory, 'component-files', 'Component cannot have both CSS and Less styles');
+    for (const file of await entries(directory)) {
+      if (file.isDirectory()) {
+        report(
+          resolve(directory, file.name),
+          'component-files',
+          'Components contain only three files',
+        );
+        continue;
+      }
+      const allowed =
+        /\.(?:ts|html|css|less)$/.test(file.name) &&
+        stem(resolve(directory, file.name)) === entry.name;
+      if (!allowed)
+        report(resolve(directory, file.name), 'component-files', 'Unexpected component file');
+    }
+  }
+
+  const pageRoot = resolve(root, paths.pages);
+  for (const entry of await entries(pageRoot)) {
+    if (!entry.isDirectory() || entry.name.startsWith('.')) continue;
+    const directory = resolve(pageRoot, entry.name);
+    const pageFiles = await entries(directory);
+    const expected = `${entry.name}-page`;
+    if (!pageFiles.some((file) => file.isFile() && file.name === `${expected}.ts`))
+      report(directory, 'page-files', `Missing ${expected}.ts`);
+    if (!pageFiles.some((file) => file.isFile() && file.name === `${expected}.html`))
+      report(directory, 'page-files', `Missing ${expected}.html`);
+  }
+
+  const themeRoot = resolve(root, paths.themes);
+  for (const entry of await entries(themeRoot)) {
+    if (!entry.isDirectory() || entry.name.startsWith('.')) continue;
+    const directory = resolve(themeRoot, entry.name);
+    const files = (await entries(directory)).filter((file) => file.isFile());
+    const themes = files.filter((file) => /-theme\.ts$/.test(file.name));
+    if (themes.length !== 1)
+      report(directory, 'theme-files', 'A theme directory contains one *-theme.ts definition');
+  }
+}
+
 const config = ts.readConfigFile(resolve(root, 'tsconfig.json'), ts.sys.readFile);
 if (config.error) throw new Error(ts.flattenDiagnosticMessageText(config.error.messageText, '\n'));
 const options = ts.parseJsonConfigFileContent(config.config, ts.sys, root).options;

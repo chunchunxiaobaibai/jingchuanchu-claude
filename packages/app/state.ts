@@ -26,6 +26,7 @@ export interface StateReader<S> {
   readonly value: ReadonlyData<S>;
   subscribe(listener: () => void, scope?: Scope): Cleanup;
 }
+/** @deprecated 业务状态改用 application 入口的 `defineStore`，局部状态用 `signal`。 见 docs/development/migrating-to-application.md。 */
 export class StateStore<S> implements StateReader<S> {
   private current: ReadonlyData<S>;
   private listeners = new Set<() => void>();
