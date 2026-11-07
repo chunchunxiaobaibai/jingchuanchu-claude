@@ -1,0 +1,26 @@
+<section class="settings-page">
+  <h1>设置</h1>
+  <p class="best">最高分 {{ best }}</p>
+  <div class="settings-form">
+    <label>
+      <span>昵称</span>
+      <input model:value="nickname" maxlength="12" autocomplete="nickname" />
+    </label>
+    <label>
+      <span>音量</span>
+      <input type="range" min="0" max="1" step="0.05" model:value="volume" />
+      <output>{{ volume }}</output>
+    </label>
+    <label class="inline">
+      <input type="checkbox" model:value="muted" />
+      <span>静音</span>
+    </label>
+    <div class="actions">
+      <button type="button" @click="save()">保存设置</button>
+      <button type="button" class="ghost" @click="resetProgress()">清除进度</button>
+    </div>
+    <template when="status">
+      <p class="status">{{ status }}</p>
+    </template>
+  </div>
+</section>

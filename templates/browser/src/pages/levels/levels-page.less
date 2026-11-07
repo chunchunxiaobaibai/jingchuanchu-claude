@@ -1,0 +1,48 @@
+.levels-page {
+  display: grid;
+  gap: 1rem;
+
+  h1 {
+    margin-bottom: 0;
+    color: var(--jcc-accent);
+  }
+
+  .level-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.75rem;
+
+    li {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 1rem;
+      padding: 0.9rem 1.1rem;
+      border-radius: 0.9rem;
+      background: color-mix(in srgb, var(--jcc-accent) 6%, white);
+      border: 1px solid color-mix(in srgb, var(--jcc-accent) 18%, transparent);
+
+      a {
+        color: var(--jcc-accent);
+        font-weight: 600;
+        text-decoration: none;
+      }
+
+      span {
+        color: var(--jcc-muted);
+        font-size: 0.85rem;
+      }
+
+      &.locked {
+        opacity: 0.6;
+
+        a {
+          color: var(--jcc-ink);
+          pointer-events: none;
+        }
+      }
+    }
+  }
+}

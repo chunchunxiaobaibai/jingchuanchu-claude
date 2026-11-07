@@ -7,6 +7,9 @@ export interface BrowserDriver {
   isHidden(): boolean;
   subscribeVisibility(callback: () => void): Cleanup;
 }
+export function createBrowserDriver(): BrowserDriver {
+  return defaultDriver();
+}
 function defaultDriver(): BrowserDriver {
   return {
     requestFrame: (callback) => requestAnimationFrame(callback),

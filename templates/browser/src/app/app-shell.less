@@ -1,0 +1,42 @@
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--jcc-ink) 12%, transparent);
+  background: color-mix(in srgb, var(--jcc-background) 92%, white);
+
+  .brand {
+    color: var(--jcc-accent);
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 1.15rem;
+  }
+
+  nav {
+    display: flex;
+    gap: 1rem;
+
+    a {
+      color: var(--jcc-ink);
+      text-decoration: none;
+
+      &:hover {
+        color: var(--jcc-accent);
+      }
+    }
+  }
+
+  .best {
+    margin-left: auto;
+    color: var(--jcc-muted);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.app-main {
+  display: block;
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 1.5rem;
+}

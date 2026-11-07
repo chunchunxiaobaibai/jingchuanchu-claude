@@ -1,8 +1,10 @@
-import { access, cp, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { access, cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { dirname, resolve, relative, join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import ts from 'typescript';
+import { APPLICATION_PROFILE, readProjectConfig } from './project-config.mjs';
+import { generateApplicationArtifact } from './application-scaffold.mjs';
 
 const prefix = '@xiaobaibaifqy/jingchuanchu-';
 const exists = (file) =>
@@ -57,7 +59,7 @@ async function localDependencies(bundle, names, target) {
 }
 export async function createProject(
   target,
-  { preset = 'singleplayer', style = 'css', bundle } = {},
+  { preset = 'singleplayer', style = 'css', bundle, legacy = false } = {},
 ) {
   if (!Object.hasOwn(presets, preset)) throw new Error(`Unknown preset: ${preset}`);
   if (!['css', 'less'].includes(style)) throw new Error(`Unknown style: ${style}`);
@@ -65,21 +67,75 @@ export async function createProject(
   if ((await exists(target)) && (await readdir(target)).length)
     throw new Error('Target directory must be empty');
   const browser = ['singleplayer', 'client'].includes(preset);
-  const selected = [...presets[preset], ...(browser ? ['tooling'] : [])];
+  const applicationLayout = browser && !legacy;
+  const selected = applicationLayout
+    ? [
+        'app',
+        'core',
+        'ecs',
+        'assets',
+        'browser',
+        'input',
+        'renderer-2d',
+        'tooling',
+        ...(preset === 'client' ? ['net'] : []),
+      ]
+    : [...presets[preset], ...(browser ? ['tooling'] : [])];
   // Resolve and verify every local archive before writing project files.
   const local = bundle ? await localDependencies(resolve(bundle), selected, target) : undefined;
   await mkdir(target, { recursive: true });
   let pkg;
   if (browser) {
-    let starter = fileURLToPath(new URL('./starters/browser', import.meta.url));
+    let starter = fileURLToPath(
+      new URL(legacy ? './starters/legacy-browser' : './starters/browser', import.meta.url),
+    );
     if (!(await exists(starter)))
-      starter = fileURLToPath(new URL('../../templates/browser', import.meta.url));
+      starter = fileURLToPath(
+        new URL(
+          legacy ? '../../templates/legacy-browser' : '../../templates/browser',
+          import.meta.url,
+        ),
+      );
     await cp(starter, target, {
       recursive: true,
       filter: (file) => !/(^|[\\/])(node_modules|dist)([\\/]|$)/.test(relative(starter, file)),
     });
     pkg = JSON.parse(await readFile(join(target, 'package.json'), 'utf8'));
-    if (style === 'less') {
+    if (applicationLayout) {
+      if (style === 'css') {
+        async function renameApplicationStyles(directory) {
+          for (const entry of await readdir(directory, { withFileTypes: true })) {
+            const file = join(directory, entry.name);
+            if (entry.isDirectory()) await renameApplicationStyles(file);
+            else if (file.endsWith('.less')) {
+              const { rename } = await import('node:fs/promises');
+              await rename(file, file.slice(0, -5) + '.css');
+            }
+          }
+        }
+        async function rewriteStyleImports(directory) {
+          for (const entry of await readdir(directory, { withFileTypes: true })) {
+            const file = join(directory, entry.name);
+            if (entry.isDirectory()) await rewriteStyleImports(file);
+            else if (file.endsWith('.ts')) {
+              const source = await readFile(file, 'utf8');
+              const next = source.replace(/(['"])([^'"]+)\.less\1/g, '$1$2.css$1');
+              if (next !== source) await writeFile(file, next);
+            }
+          }
+        }
+        await renameApplicationStyles(join(target, 'src'));
+        await rewriteStyleImports(join(target, 'src'));
+        delete pkg.devDependencies.less;
+      }
+      if (preset === 'client') {
+        pkg.dependencies[prefix + 'net'] = '^' + manifest.version;
+        await writeFile(
+          join(target, 'src/app/network.ts'),
+          `import { networkModule } from '${prefix}net/module';\nexport const network = networkModule<unknown, unknown>({url: 'ws://localhost:8080/ws', decoder: {parse: value => value}, onMessage(message) { console.log(message); }});\n`,
+        );
+      }
+    } else if (style === 'less') {
       async function renameStyles(directory) {
         for (const entry of await readdir(directory, { withFileTypes: true })) {
           const file = join(directory, entry.name);
@@ -93,7 +149,7 @@ export async function createProject(
       await renameStyles(join(target, 'src/ui/components'));
       pkg.devDependencies.less = manifest.dependencies.less;
     }
-    if (preset === 'client') {
+    if (!applicationLayout && preset === 'client') {
       pkg.dependencies[prefix + 'net'] = '^' + manifest.version;
       await writeFile(
         join(target, 'src/app/network.ts'),
@@ -166,10 +222,12 @@ export async function createProject(
   }
   await writeFile(join(target, 'package.json'), JSON.stringify(pkg, null, 2) + '\n');
   await writeFile(join(target, '.gitignore'), 'node_modules/\ndist/\n');
-  await writeFile(
-    join(target, 'jingchuanchu.json'),
-    JSON.stringify({ preset, style }, null, 2) + '\n',
-  );
+  let projectConfig = { preset, style };
+  if (applicationLayout) {
+    const starterConfig = JSON.parse(await readFile(join(target, 'jingchuanchu.json'), 'utf8'));
+    projectConfig = { ...starterConfig, preset, style };
+  }
+  await writeFile(join(target, 'jingchuanchu.json'), JSON.stringify(projectConfig, null, 2) + '\n');
   return target;
 }
 function register(code, file, kind, exportName, importFile) {
@@ -211,14 +269,28 @@ function register(code, file, kind, exportName, importFile) {
     code.slice(offset)
   );
 }
-export async function generate(kind, name, { project = '.', parent, style } = {}) {
+export async function generate(
+  kind,
+  name,
+  { project = '.', parent, style, route, page, shared, domain, extends: extendFrom } = {},
+) {
+  const config = await readProjectConfig(project);
+  if (config.profile === APPLICATION_PROFILE)
+    return generateApplicationArtifact(config, kind, name, {
+      route,
+      page,
+      shared,
+      domain,
+      extends: extendFrom,
+      style,
+    });
   if (!['view', 'scene'].includes(kind)) throw new Error('Generate supports view or scene');
   const exported = componentName(name),
     root = resolve(project);
-  const config = JSON.parse(
+  const legacyConfig = JSON.parse(
     await readFile(join(root, 'jingchuanchu.json'), 'utf8').catch(() => '{}'),
   );
-  style ??= config.style ?? 'css';
+  style ??= legacyConfig.style ?? config.style ?? 'css';
   if (!['css', 'less'].includes(style)) throw new Error('Style must be css or less');
   const base =
     kind === 'view'

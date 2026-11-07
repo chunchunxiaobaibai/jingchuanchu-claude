@@ -1,18 +1,24 @@
-# 镜川初应用套件模板
+# 镜川初参考游戏
 
-本地 0.4.0 的 TS 浏览器项目：app/contracts/game/ui/styles 分层，defineGame/defineScene/defineInput/defineView 与 bootstrapGame 完成组装。
+网页 2D 参考游戏模板。页面、组件、Store、路由、主题、Canvas 场景、音频与保存均使用 `@xiaobaibaifqy/jingchuanchu-app/application` 的新模型。
+
+## 开发
 
 ```bash
 npm install
+npm run dev
 npm run check
 npm run build
-npm run dev
-npm run generate -- view score-panel
-npm run generate -- scene menu
 ```
 
-Vite 插件自动关联组件同名 HTML 和 CSS/Less；不手动 import 模板/样式。check 执行结构、组件资源/绑定和 TS 检查。组件可使用 data-text、data-attr-*、data-on-* 和 data-ref。普通 CSS 由编译器隔离，Less 可导入共享变量。CLI create 可通过 --style less 自动配置。
+`npm run dev` 后打开终端提示的地址。首次播放音效需要点击“开始”以完成浏览器音频解锁。
 
-使用分发套件中的模板或 CLI --bundle 创建项目；新 app/tooling 尚未发布 npm。直接克隆本目录开发时需先在引擎仓库构建包，再使用本地依赖。
+## 目录
 
-UI 不访问 Engine/World；展示状态与命令契约在 contracts/application.ts，应用控制在 app/game.ts，固定步玩法在 game。旧 GameView/GameHud 保留作手工模板迁移参考，新启动路径仅用 GameApp/GameControls。浏览器验证由使用者执行。
+- `src/app`：应用配置、路由与外壳。
+- `src/pages`：首页、关卡、游玩、设置、结算，均为三文件页面。
+- `src/components`：可复用 UI 组件。
+- `src/game`：跨页面的游戏 Store、关卡与保存定义。
+- `src/themes`：默认与森林主题，所有资源通过 theme 资源键解析。
+
+素材位于 `src/assets`，为项目内生成的简单图形与音调，许可见 [LICENSES.md](LICENSES.md)。

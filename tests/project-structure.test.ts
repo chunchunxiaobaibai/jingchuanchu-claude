@@ -21,17 +21,17 @@ const valid: Record<string, string> = {
   'src/ui/components/Hud/Hud.module.css': '.root { display: flex; }',
   'src/styles/base.css': 'body { margin: 0; }',
 };
-async function check(changes: Record<string, string>) {
+async function checkWith(base: Record<string, string>, changes: Record<string, string>) {
   const directory = await mkdtemp(join(tmpdir(), 'jingchuanchu-structure-'));
   try {
-    for (const [name, source] of Object.entries({ ...valid, ...changes })) {
+    for (const [name, source] of Object.entries({ ...base, ...changes })) {
       const file = join(directory, name);
       await mkdir(dirname(file), { recursive: true });
       await writeFile(file, source);
     }
     return spawnSync(
       process.execPath,
-      [resolve('templates/browser/scripts/check-project.mjs'), directory],
+      ['--conditions=source', resolve('templates/browser/scripts/check-project.mjs'), directory],
       { encoding: 'utf8' },
     );
   } finally {
@@ -39,6 +39,45 @@ async function check(changes: Record<string, string>) {
     await rm(directory, { recursive: true, force: true });
   }
 }
+async function check(changes: Record<string, string>) {
+  return checkWith(valid, changes);
+}
+
+const application: Record<string, string> = {
+  'index.html':
+    '<!doctype html><html><head><title>Game</title></head><body><game-app></game-app><script type="module" src="/src/main.ts"></script></body></html>',
+  'tsconfig.json': JSON.stringify({
+    compilerOptions: { moduleResolution: 'Bundler', module: 'ESNext' },
+  }),
+  'jingchuanchu.json': JSON.stringify({
+    schemaVersion: 2,
+    profile: 'application',
+    preset: 'singleplayer',
+    style: 'less',
+    paths: {
+      app: 'src/app',
+      pages: 'src/pages',
+      game: 'src/game',
+      components: 'src/components',
+      themes: 'src/themes',
+      account: 'src/account',
+    },
+  }),
+  'src/main.ts': "import { app } from './app/app-config.js';",
+  'src/app/app-config.ts': 'export const app = {};',
+  'src/app/app-routes.ts': 'export const routes = [];',
+  'src/app/app-shell.ts': 'export const AppShell = {};',
+  'src/app/app-shell.html': '<div><router-outlet></router-outlet></div>',
+  'src/app/app-shell.less': 'div { display: block; }',
+  'src/pages/home/home-page.ts': 'export const HomePage = {};',
+  'src/pages/home/home-page.html': '<section>home</section>',
+  'src/components/icon-button/icon-button.ts': 'export const IconButton = {};',
+  'src/components/icon-button/icon-button.html': '<button type="button"></button>',
+  'src/components/icon-button/icon-button.less': 'button { display: block; }',
+  'src/game/session/game-store.ts': 'export const GameStore = {};',
+  'src/themes/default/default-theme.ts': 'export const defaultTheme = {};',
+  'src/styles/base.less': 'body { margin: 0; }',
+};
 test('structured native TS project passes', async () => {
   const result = await check({});
   assert.equal(result.status, 0, result.stderr);
@@ -87,4 +126,59 @@ test('misplaced files, missing component files and internal engine paths fail', 
   assert.notEqual(result.status, 0);
   for (const rule of ['file-location', 'component-files', 'engine-internals'])
     assert.match(result.stderr, new RegExp(rule));
+});
+
+test('application profile projects use configured paths and component layouts', async () => {
+  const result = await checkWith(application, {});
+  assert.equal(result.status, 0, result.stderr);
+
+  const missing = await checkWith(application, {
+    'src/components/icon-button/extra.md': 'notes',
+    'src/components/missing-html/missing-html.ts': 'export const Missing = {};',
+    'src/ui/legacy.ts': 'export const legacy = true;',
+  });
+  assert.notEqual(missing.status, 0);
+  assert.match(missing.stderr, /component-files/);
+  assert.match(missing.stderr, /file-location/);
+
+  const withoutConfig = { ...application };
+  delete withoutConfig['src/app/app-config.ts'];
+  const missingApp = await checkWith(withoutConfig, {});
+  assert.notEqual(missingApp.status, 0);
+  assert.match(missingApp.stderr, /app-files/);
+});
+
+test('custom paths must stay inside the project and schemaVersion is explicit', async () => {
+  const escaped = await checkWith(application, {
+    'jingchuanchu.json': JSON.stringify({
+      schemaVersion: 2,
+      profile: 'application',
+      preset: 'singleplayer',
+      style: 'less',
+      paths: { app: '../outside' },
+    }),
+  });
+  assert.notEqual(escaped.status, 0);
+  assert.match(escaped.stderr, /must point inside the project/);
+
+  const unknownVersion = await checkWith(application, {
+    'jingchuanchu.json': JSON.stringify({
+      schemaVersion: 3,
+      profile: 'application',
+      preset: 'singleplayer',
+      style: 'less',
+    }),
+  });
+  assert.notEqual(unknownVersion.status, 0);
+  assert.match(unknownVersion.stderr, /Unsupported schemaVersion/);
+
+  const missingProfile = await checkWith(application, {
+    'jingchuanchu.json': JSON.stringify({
+      schemaVersion: 2,
+      preset: 'singleplayer',
+      style: 'less',
+    }),
+  });
+  assert.notEqual(missingProfile.status, 0);
+  assert.match(missingProfile.stderr, /profile "application"/);
 });

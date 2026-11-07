@@ -1,0 +1,20 @@
+<div class="play-hud">
+  <div class="stats">
+    <span>得分 <b>{{ score }}</b></span>
+    <span>时间 <b>{{ time }}</b></span>
+  </div>
+  <div class="actions">
+    <icon-button :label="'暂停'" @press="togglePause()">
+      <template slot="content"><img :src="pauseUrl" alt="" /></template>
+    </icon-button>
+    <button type="button" class="text" @click="restart()">重开</button>
+  </div>
+  <template when="paused && started">
+    <div class="pause-panel">
+      <h3>已暂停</h3>
+      <p>页面其他按钮仍可使用。</p>
+      <button type="button" @click="togglePause()">继续</button>
+      <button type="button" class="text" @click="restart()">重新开始</button>
+    </div>
+  </template>
+</div>

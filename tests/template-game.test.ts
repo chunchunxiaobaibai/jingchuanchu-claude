@@ -1,30 +1,32 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { Engine } from '@xiaobaibaifqy/jingchuanchu-core';
-import { SceneManager } from '@xiaobaibaifqy/jingchuanchu-core/scenes';
-import { Position2D } from '@xiaobaibaifqy/jingchuanchu-renderer-2d';
-import { createGameScene } from '../templates/browser/src/game/scenes/createGameScene.js';
+import { spawnSync } from 'node:child_process';
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import { Owner } from '@xiaobaibaifqy/jingchuanchu-app/application';
+import { PlayScene } from '../templates/browser/src/pages/play/play-scene.js';
+import { GameStore } from '../templates/browser/src/game/session/game-store.js';
 
-test('native template scene moves from intents, pauses and cleans up without DOM', async () => {
-  const engine = new Engine({ tickRate: 10 });
-  let input = { x: 1, y: 0 };
-  const game = createGameScene(() => input);
-  const scenes = new SceneManager(engine);
-  await scenes.switchTo(game.scene);
-  const player = [...engine.world.query(Position2D)][0]!;
-  engine.start();
-  engine.advance(0.1);
-  assert.equal(engine.world.require(player, Position2D).x, 504);
-  engine.pause();
-  engine.advance(0.1);
-  assert.equal(engine.world.require(player, Position2D).x, 504);
-  input = { x: 0, y: 0 };
-  game.dispatch({ type: 'move-to', x: 510, y: 300 });
-  engine.resume();
-  engine.advance(0.1);
-  assert.equal(engine.world.require(player, Position2D).x, 510);
-  scenes.dispose();
-  assert.equal(engine.world.size, 0);
-  assert.equal(engine.getSystems().length, 0);
-  engine.dispose();
+test('reference template keeps the application profile, structure and playable scene', async () => {
+  const structure = spawnSync(
+    process.execPath,
+    [
+      '--conditions=source',
+      resolve('templates/browser/scripts/check-project.mjs'),
+      'templates/browser',
+    ],
+    { encoding: 'utf8' },
+  );
+  assert.equal(structure.status, 0, structure.stderr);
+  const config = JSON.parse(
+    await readFile(resolve('templates/browser/jingchuanchu.json'), 'utf8'),
+  ) as { schemaVersion?: number; profile?: string };
+  assert.equal(config.schemaVersion, 2);
+  assert.equal(config.profile, 'application');
+  assert.equal(typeof PlayScene.setup, 'function');
+
+  const store = new Owner().useStore(GameStore);
+  store.actions.recordResult('one', 30);
+  assert.equal(store.state.highScore(), 30);
+  assert.deepEqual(store.state.unlocked(), ['one', 'two']);
 });

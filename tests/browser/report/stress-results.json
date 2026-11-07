@@ -1,0 +1,181 @@
+{
+  "config": {
+    "argv": [
+      "D:\\nvm_base\\nodejs\\node.exe",
+      "D:\\aiproject\\claude-desktop\\jingchuanchu\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "-c",
+      "tests/browser/stress-playwright.config.ts"
+    ],
+    "configFile": "D:\\aiproject\\claude-desktop\\jingchuanchu\\tests\\browser\\stress-playwright.config.ts",
+    "rootDir": "D:/aiproject/claude-desktop/jingchuanchu/tests/browser",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "D:/aiproject/claude-desktop/jingchuanchu/tests/browser/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "D:/aiproject/claude-desktop/jingchuanchu/tests/browser",
+        "testIgnore": [],
+        "testMatch": ["stress.spec.ts"],
+        "timeout": 60000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "D:\\aiproject\\claude-desktop\\jingchuanchu\\tests\\browser\\test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "",
+        "testDir": "D:\\aiproject\\claude-desktop\\jingchuanchu\\tests\\browser",
+        "snapshotDir": "D:\\aiproject\\claude-desktop\\jingchuanchu\\tests\\browser",
+        "testIgnore": [],
+        "testMatch": "stress.spec.ts",
+        "timeout": 60000,
+        "use": {
+          "baseURL": "http://127.0.0.1:4177",
+          "headless": true,
+          "channel": "chrome",
+          "viewport": {
+            "width": 1280,
+            "height": 800
+          },
+          "screenshot": "only-on-failure",
+          "trace": "retain-on-failure",
+          "locale": "zh-CN"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": ""
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      ["list", null],
+      [
+        "html",
+        {
+          "outputFolder": "D:\\aiproject\\claude-desktop\\jingchuanchu\\tests\\browser\\report/html-stress",
+          "open": "never"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "D:\\aiproject\\claude-desktop\\jingchuanchu\\tests\\browser\\report/stress-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "stress.spec.ts",
+      "file": "stress.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "B2 浏览器压力测试",
+          "file": "stress.spec.ts",
+          "line": 9,
+          "column": 6,
+          "specs": [
+            {
+              "title": "2000 精灵 + 500 碰撞体 + HUD + 200 行列表",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 10579,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "压力测试页面已启动，开始采集...\n"
+                        },
+                        {
+                          "text": "采集完成，指标： {\n  \"frameTimes\": {\n    \"p50\": 2.9,\n    \"p95\": 4.4,\n    \"count\": 600\n  },\n  \"heap\": {\n    \"avgMB\": 3,\n    \"samples\": 27\n  },\n  \"longTasks\": 0,\n  \"fps\": 60\n}\n"
+                        },
+                        {
+                          "text": "报告已写入: D:\\aiproject\\claude-desktop\\jingchuanchu\\docs\\performance\\browser-stress-0.5.json\n"
+                        },
+                        {
+                          "text": "帧耗时 p50: 2.9ms, p95: 4.4ms\n"
+                        },
+                        {
+                          "text": "平均堆: 3MB, 长任务: 0\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-07T09:03:19.421Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "496454548f4205703e07-0f786e7731ab35decb11",
+              "file": "stress.spec.ts",
+              "line": 10,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-07T09:03:18.956Z",
+    "duration": 11786.301,
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

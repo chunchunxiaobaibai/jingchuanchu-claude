@@ -68,15 +68,15 @@
     <div id="list-container"></div>
     <canvas id="canvas"></canvas>
     <div id="metrics">
-      帧耗时 p50: <span id="p50">--</span>ms | p95: <span id="p95">--</span>ms |
-      堆: <span id="heap">--</span>MB | 长任务: <span id="long-tasks">0</span>
+      帧耗时 p50: <span id="p50">--</span>ms | p95: <span id="p95">--</span>ms | 堆:
+      <span id="heap">--</span>MB | 长任务: <span id="long-tasks">0</span>
     </div>
     <script type="module">
       // 性能采集
       window.perfData = {
         frameTimes: [],
         longTasks: 0,
-        heapSamples: []
+        heapSamples: [],
       };
 
       // 长任务观察（PerformanceObserver）
@@ -127,7 +127,7 @@
           size: 8 + Math.random() * 8,
           color: `hsl(${Math.random() * 360}, 70%, 60%)`,
           rotation: Math.random() * Math.PI * 2,
-          rotSpeed: (Math.random() - 0.5) * 2
+          rotSpeed: (Math.random() - 0.5) * 2,
         });
       }
 
@@ -146,7 +146,7 @@
           radius: isCircle ? 10 + Math.random() * 15 : undefined,
           width: !isCircle ? 15 + Math.random() * 20 : undefined,
           height: !isCircle ? 15 + Math.random() * 20 : undefined,
-          color: '#ff6b6b'
+          color: '#ff6b6b',
         });
       }
 
@@ -155,12 +155,12 @@
       const listData = Array.from({ length: 200 }, (_, i) => ({
         id: i,
         name: `实体 ${i}`,
-        value: Math.floor(Math.random() * 1000)
+        value: Math.floor(Math.random() * 1000),
       }));
 
       function renderList() {
         listContainer.innerHTML = listData
-          .map(item => `<div class="list-item">${item.name}: ${item.value}</div>`)
+          .map((item) => `<div class="list-item">${item.name}: ${item.value}</div>`)
           .join('');
       }
       renderList();
@@ -208,7 +208,7 @@
             const b = sorted[j];
             const maxReach = Math.max(
               a.radius || Math.max(a.width, a.height) || 0,
-              b.radius || Math.max(b.width, b.height) || 0
+              b.radius || Math.max(b.width, b.height) || 0,
             );
             if (b.x - a.x > maxReach * 2) break;
 
@@ -265,7 +265,7 @@
         // FPS 计算
         frameCount++;
         if (time - lastFpsTime > 1000) {
-          currentFps = Math.round(frameCount * 1000 / (time - lastFpsTime));
+          currentFps = Math.round((frameCount * 1000) / (time - lastFpsTime));
           document.getElementById('fps').textContent = currentFps;
           frameCount = 0;
           lastFpsTime = time;
@@ -277,9 +277,7 @@
 
         // 采集堆内存（每 30 帧）
         if (performance.memory && frameCount % 30 === 0) {
-          window.perfData.heapSamples.push(
-            performance.memory.usedJSHeapSize / 1048576
-          );
+          window.perfData.heapSamples.push(performance.memory.usedJSHeapSize / 1048576);
         }
 
         // 更新指标显示（每 60 帧）
@@ -292,7 +290,9 @@
           document.getElementById('long-tasks').textContent = window.perfData.longTasks;
 
           if (window.perfData.heapSamples.length > 0) {
-            const avgHeap = window.perfData.heapSamples.reduce((a, b) => a + b, 0) / window.perfData.heapSamples.length;
+            const avgHeap =
+              window.perfData.heapSamples.reduce((a, b) => a + b, 0) /
+              window.perfData.heapSamples.length;
             document.getElementById('heap').textContent = avgHeap.toFixed(1);
           }
         }
@@ -307,22 +307,24 @@
         const sorted = [...window.perfData.frameTimes].sort((a, b) => a - b);
         const p50 = sorted[Math.floor(sorted.length * 0.5)] || 0;
         const p95 = sorted[Math.floor(sorted.length * 0.95)] || 0;
-        const avgHeap = window.perfData.heapSamples.length > 0
-          ? window.perfData.heapSamples.reduce((a, b) => a + b, 0) / window.perfData.heapSamples.length
-          : 0;
+        const avgHeap =
+          window.perfData.heapSamples.length > 0
+            ? window.perfData.heapSamples.reduce((a, b) => a + b, 0) /
+              window.perfData.heapSamples.length
+            : 0;
 
         return {
           frameTimes: {
             p50: parseFloat(p50.toFixed(2)),
             p95: parseFloat(p95.toFixed(2)),
-            count: window.perfData.frameTimes.length
+            count: window.perfData.frameTimes.length,
           },
           heap: {
             avgMB: parseFloat(avgHeap.toFixed(1)),
-            samples: window.perfData.heapSamples.length
+            samples: window.perfData.heapSamples.length,
           },
           longTasks: window.perfData.longTasks,
-          fps: currentFps
+          fps: currentFps,
         };
       };
 

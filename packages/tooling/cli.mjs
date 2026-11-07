@@ -1,11 +1,17 @@
 #!/usr/bin/env node
 import { createProject, generate } from './scaffold.mjs';
+import { addModules } from './install.mjs';
 import { compileViews } from './compiler.mjs';
 import { readFile, readdir } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 const [command, ...args] = process.argv.slice(2);
-const help =
-  'jingchuanchu create <directory> [--preset core|singleplayer|client|server] [--style css|less] [--bundle <release-directory>]\njingchuanchu generate view|scene <kebab-name> [--project <directory>] [--parent <registration-file>] [--style css|less]\njingchuanchu check [directory]';
+const help = [
+  'jingchuanchu create <directory> [--preset core|singleplayer|client|server] [--style css|less] [--bundle <release-directory>]',
+  'jingchuanchu generate view|scene|page|component|store|theme <kebab-name> [--project <directory>] [--parent <file>] [--style css|less]',
+  '  [--route /path] [--page <name>] [--shared] [--domain <name>] [--extends <theme>]',
+  'jingchuanchu add [--modules assets,net | --all] [--bundle <release-directory>] [--project <directory>]',
+  'jingchuanchu check [directory]',
+].join('\n');
 try {
   if (!command || command === '--help') {
     console.log(help);
@@ -29,9 +35,16 @@ try {
         continue;
       }
       const key = args[i].slice(2);
-      const allowed =
-        command === 'create' ? ['preset', 'style', 'bundle'] : ['project', 'parent', 'style'];
-      if (!allowed.includes(key)) throw new Error(`Unknown option ${args[i]}`);
+      const allowed = {
+        create: ['preset', 'style', 'bundle'],
+        generate: ['project', 'parent', 'style', 'route', 'page', 'shared', 'domain', 'extends'],
+        add: ['project', 'bundle', 'modules', 'all'],
+      }[command];
+      if (!allowed?.includes(key)) throw new Error(`Unknown option ${args[i]}`);
+      if (key === 'shared' || key === 'all') {
+        options[key] = true;
+        continue;
+      }
       const value = args[++i];
       if (!value || value.startsWith('--')) throw new Error(`Missing value for --${key}`);
       options[key] = value;
@@ -42,7 +55,14 @@ try {
       );
     else if (command === 'generate' && positional.length === 2)
       console.log((await generate(positional[0], positional[1], options)).join('\n'));
-    else throw new Error(help);
+    else if (command === 'add' && positional.length <= 1) {
+      const result = await addModules(positional[0] ?? options.project ?? '.', {
+        ...(options.modules ? { modules: options.modules.split(',') } : {}),
+        all: options.all === true,
+        bundle: options.bundle,
+      });
+      console.log(`Added ${result.packages.join(', ')}\nNext: ${result.next}`);
+    } else throw new Error(help);
   }
 } catch (error) {
   console.error(error.message);
