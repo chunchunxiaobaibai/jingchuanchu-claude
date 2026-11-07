@@ -18,6 +18,62 @@ function defaultDriver(): BrowserDriver {
     },
   };
 }
+/** Schedules frames and measures elapsed seconds; callers decide when it runs. */
+export interface FrameLoop {
+  readonly running: boolean;
+  /** Requests frames until stopped; the first frame reports 0 seconds. */
+  start(): void;
+  /** Cancels the pending frame and forgets the previous frame time. */
+  stop(): void;
+  /** Makes the next frame report 0 seconds, e.g. after the page was hidden. */
+  resetTime(): void;
+}
+export function createFrameLoop(
+  driver: BrowserDriver,
+  onFrame: (seconds: number) => void,
+  options: { maxDelta?: number } = {},
+): FrameLoop {
+  const maxDelta = options.maxDelta ?? Infinity;
+  if (!(maxDelta > 0)) throw new Error('Invalid frame delta limit');
+  let frame: number | undefined;
+  let previous: number | undefined;
+  let running = false;
+  const tick = (time: number): void => {
+    frame = undefined;
+    if (!running) return;
+    const seconds =
+      previous === undefined ? 0 : Math.min(maxDelta, Math.max(0, (time - previous) / 1000));
+    previous = time;
+    try {
+      onFrame(seconds);
+    } catch (error) {
+      loop.stop();
+      throw error;
+    }
+    if (running && frame === undefined) frame = driver.requestFrame(tick);
+  };
+  const loop: FrameLoop = {
+    get running() {
+      return running;
+    },
+    start() {
+      if (running) return;
+      running = true;
+      previous = undefined;
+      frame = driver.requestFrame(tick);
+    },
+    stop() {
+      running = false;
+      previous = undefined;
+      if (frame !== undefined) driver.cancelFrame(frame);
+      frame = undefined;
+    },
+    resetTime() {
+      previous = undefined;
+    },
+  };
+  return loop;
+}
 export function runBrowser(
   engine: Engine,
   onError: (error: unknown) => void,
@@ -25,33 +81,26 @@ export function runBrowser(
 ): Cleanup {
   const driver = options.driver ?? defaultDriver();
   const scope = options.scope ?? engine.scope;
-  let frame: number | undefined;
-  let previous: number | undefined;
   let closed = false;
   let pausedForVisibility = false;
-  const suspend = (): void => {
-    if (frame !== undefined) driver.cancelFrame(frame);
-    frame = undefined;
-    previous = undefined;
-  };
   const handleError = (error: unknown): void => {
-    suspend();
+    loop.stop();
     if (engine.status !== 'disposed') engine.stop();
     onError(error);
   };
-  const update = (time: number): void => {
-    frame = undefined;
-    if (closed || engine.status !== 'running') return;
-    try {
-      engine.advance(previous === undefined ? 0 : Math.max(0, (time - previous) / 1000));
-      previous = time;
-    } catch (error) {
-      handleError(error);
+  // Render systems receive the raw elapsed time; fixed steps are capped by Engine maxSteps.
+  const loop = createFrameLoop(driver, (seconds) => {
+    if (closed || engine.status !== 'running') {
+      loop.stop();
       return;
     }
-    if (!closed && engine.status === 'running' && frame === undefined)
-      frame = driver.requestFrame(update);
-  };
+    try {
+      engine.advance(seconds);
+    } catch (error) {
+      handleError(error);
+    }
+  });
+  const suspend = (): void => loop.stop();
   const begin = (): void => {
     if (closed || engine.status !== 'running') return;
     if (driver.isHidden()) {
@@ -59,7 +108,7 @@ export function runBrowser(
       engine.pause();
       return;
     }
-    if (frame === undefined) frame = driver.requestFrame(update);
+    loop.start();
   };
   const visibility = (): void => {
     if (driver.isHidden()) {

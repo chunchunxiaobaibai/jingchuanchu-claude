@@ -104,10 +104,11 @@ emit 中新增的订阅不会进入本次通知；清除/取消也不改变已�
 
 ## @xiaobaibaifqy/jingchuanchu-browser
 
-| API           | 参数/返回                                                                                                 | 说明                                                             |
-| ------------- | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| browserModule | `(options?: { driver?: BrowserDriver; onError?: (error: unknown) => void }): EngineModule`                | ID browser-runtime；不在 setup 自动 start                        |
-| runBrowser    | `(engine, onError, options?: { driver?: BrowserDriver; scope?: Scope; autoStart?: boolean }): () => void` | 底层驱动；autoStart 默认 true；返回函数只移除驱动，不销毁 Engine |
+| API             | 参数/返回                                                                                                 | 说明                                                                                                                                                                                                                            |
+| --------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| browserModule   | `(options?: { driver?: BrowserDriver; onError?: (error: unknown) => void }): EngineModule`                | ID browser-runtime；不在 setup 自动 start                                                                                                                                                                                       |
+| runBrowser      | `(engine, onError, options?: { driver?: BrowserDriver; scope?: Scope; autoStart?: boolean }): () => void` | 底层驱动；autoStart 默认 true；返回函数只移除驱动，不销毁 Engine                                                                                                                                                                |
+| createFrameLoop | `(driver: BrowserDriver, onFrame: (seconds) => void, options?: { maxDelta?: number }): FrameLoop`         | 下一版本（未发布）。共享帧调度：`start/stop/resetTime/running`，首帧与 `resetTime` 后报告 0 秒，`maxDelta` 默认不限；回调抛错时停止并重新抛出。runBrowser 不限制间隔（固定步由 Engine `maxSteps` 限制），GameCanvas 限制为 1 秒 |
 
 BrowserDriver 的方法：requestFrame(callback: (milliseconds: number) => void): number、cancelFrame(id: number): void、isHidden(): boolean、subscribeVisibility(callback: () => void): () => void。
 默认驱动使用 requestAnimationFrame 和 document.hidden。发生推进异常时停止驱动/引擎并调用 onError；browserModule 默认 onError 输出到 console.error。

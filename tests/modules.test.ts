@@ -2,7 +2,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Engine } from '@xiaobaibaifqy/jingchuanchu-core';
 import { resource } from '@xiaobaibaifqy/jingchuanchu-ecs';
-import { browserModule, type BrowserDriver } from '@xiaobaibaifqy/jingchuanchu-browser';
+import {
+  browserModule,
+  createFrameLoop,
+  type BrowserDriver,
+} from '@xiaobaibaifqy/jingchuanchu-browser';
 import { assetModule } from '@xiaobaibaifqy/jingchuanchu-assets/module';
 import { keyboardModule, Keyboard } from '@xiaobaibaifqy/jingchuanchu-input/module';
 import { networkModule } from '@xiaobaibaifqy/jingchuanchu-net/module';
@@ -204,4 +208,92 @@ test('optional network module connects on start, survives pause and closes on st
     engine.dispose();
     globalThis.WebSocket = original;
   }
+});
+test('browser loop passes raw render deltas, restarts timing on resume and stops on errors', () => {
+  const engine = new Engine({ tickRate: 10 });
+  const host = fakeDriver();
+  const deltas: number[] = [];
+  const errors: unknown[] = [];
+  let fail = false;
+  engine.addSystem({
+    id: 'render',
+    phase: 'render',
+    update({ delta }) {
+      deltas.push(+delta.toFixed(6));
+      if (fail) throw new Error('boom');
+    },
+  });
+  engine.install([browserModule({ driver: host.driver, onError: (error) => errors.push(error) })]);
+  engine.start();
+  host.frame(1000);
+  host.frame(1100);
+  // Long stalls reach render systems unclamped; only fixed steps are capped by maxSteps.
+  host.frame(11100);
+  engine.pause();
+  engine.resume();
+  host.frame(20000);
+  host.frame(20050);
+  assert.deepEqual(deltas, [0, 0.1, 10, 0, 0.05]);
+  fail = true;
+  host.frame(20100);
+  assert.equal(errors.length, 1);
+  assert.equal(engine.status, 'stopped');
+  assert.equal(host.frames.size, 0);
+  engine.dispose();
+});
+
+test('a pause raised by a system still restarts frame timing on resume', () => {
+  const engine = new Engine({ tickRate: 10 });
+  const host = fakeDriver();
+  const deltas: number[] = [];
+  let pauseNext = false;
+  engine.addSystem({
+    id: 'render',
+    phase: 'render',
+    update({ delta }) {
+      deltas.push(+delta.toFixed(6));
+      if (pauseNext) {
+        pauseNext = false;
+        engine.pause();
+      }
+    },
+  });
+  engine.install([browserModule({ driver: host.driver })]);
+  engine.start();
+  host.frame(0);
+  pauseNext = true;
+  host.frame(100);
+  assert.equal(host.frames.size, 0);
+  engine.resume();
+  host.frame(60_000);
+  assert.deepEqual(deltas, [0, 0.1, 0]);
+  engine.dispose();
+});
+
+test('frame loops cap deltas, reset timing and stop when the callback throws', () => {
+  const host = fakeDriver();
+  const seen: number[] = [];
+  let fail = false;
+  const loop = createFrameLoop(
+    host.driver,
+    (seconds) => {
+      seen.push(seconds);
+      if (fail) throw new Error('frame failed');
+    },
+    { maxDelta: 0.25 },
+  );
+  loop.start();
+  loop.start();
+  assert.equal(host.frames.size, 1);
+  host.frame(0);
+  host.frame(100);
+  host.frame(5000);
+  loop.resetTime();
+  host.frame(6000);
+  assert.deepEqual(seen, [0, 0.1, 0.25, 0]);
+  fail = true;
+  assert.throws(() => host.frame(6100), /frame failed/);
+  assert.equal(loop.running, false);
+  assert.equal(host.frames.size, 0);
+  assert.throws(() => createFrameLoop(host.driver, () => {}, { maxDelta: 0 }), /delta limit/);
 });
